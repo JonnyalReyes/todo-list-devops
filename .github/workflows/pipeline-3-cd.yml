@@ -13,10 +13,10 @@ permissions:
 
 env:
   AWS_REGION: "us-east-1"
-  PROJECT_NAME: "devops-triple-pipeline"
-  ECS_CLUSTER: "devops-triple-pipeline-cluster"
-  BACKEND_SERVICE: "devops-triple-pipeline-backend-service"
-  FRONTEND_SERVICE: "devops-triple-pipeline-frontend-service"
+  PROJECT_NAME: "todo-list-devops"
+  ECS_CLUSTER: "todo-list-devops-cluster"
+  BACKEND_SERVICE: "todo-list-devops-backend-service"
+  FRONTEND_SERVICE: "todo-list-devops-frontend-service"
 
 jobs:
   deploy-to-ecs:

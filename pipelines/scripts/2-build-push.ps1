@@ -1,7 +1,7 @@
 # Script PowerShell para ejecutar localmente el Pipeline 2 (CI: Build & Push a ECR)
 param(
     [string]$AwsRegion = "us-east-1",
-    [string]$ProjectName = "devops-triple-pipeline"
+    [string]$ProjectName = "todo-list-devops"
 )
 
 Write-Host "==========================================================" -ForegroundColor Cyan

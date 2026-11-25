@@ -1,7 +1,7 @@
 {
-  "name": "devops-backend",
+  "name": "todo-list-backend",
   "version": "1.0.0",
-  "description": "Backend API para Proyecto DevOps AWS ECS",
+  "description": "Backend API para To-Do List en AWS ECS",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

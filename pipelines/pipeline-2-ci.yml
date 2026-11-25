@@ -13,7 +13,7 @@ permissions:
 
 env:
   AWS_REGION: "us-east-1"
-  PROJECT_NAME: "devops-triple-pipeline"
+  PROJECT_NAME: "todo-list-devops"
 
 jobs:
   build-and-push:

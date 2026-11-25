@@ -1,19 +1,18 @@
-# Proyecto Final: Tres Pipelines DevOps en AWS
+# Proyecto Final: To-Do List con Tres Pipelines DevOps en AWS
 
 **Universidad Tecnológica de Panamá (UTP)**  
 **Facultad de Ingeniería de Sistemas Computacionales**  
 **Asignatura:** Tópicos Especiales 1  
-**Profesor:** Asignación de Proyecto Final  
 
 ---
 
 ## 1. Descripción y Objetivo General
 
-Diseñar, implementar y demostrar un flujo integral DevOps que abarca:
+Diseñar, implementar y demostrar una aplicación web real de lista de tareas (**To-Do List**) con su flujo integral DevOps:
 1. **Infraestructura como Código (IaC)** aprovisionada con **Terraform**.
 2. **Integración Continua (CI)** con construcción y publicación de contenedores Docker en **Amazon ECR**.
 3. **Despliegue Continuo (CD)** automatizado sobre **Amazon ECS (AWS Fargate)** con verificación de salud (*Health Checks*) y enrutamiento mediante un **Application Load Balancer (ALB)**.
-4. **Aplicación Web Funcional**: Frontend en Nginx y Backend RESTful en Node.js comunicados a través de API.
+4. **Aplicación Web Funcional**: Frontend en Nginx y Backend RESTful en Node.js comunicados a través de API, incluyendo un panel de configuración y telemetría DevOps.
 
 ---
 
@@ -43,7 +42,7 @@ flowchart TD
         end
 
         subgraph Monitoring ["Monitoreo & Logs"]
-            CW_Logs["Amazon CloudWatch Logs\n(/ecs/devops-triple-pipeline-*)"]
+            CW_Logs["Amazon CloudWatch Logs\n(/ecs/todo-list-devops-*)"]
         end
     end
 

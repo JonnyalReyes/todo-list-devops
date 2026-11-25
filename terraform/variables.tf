@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Nombre base del proyecto para nombrar recursos"
   type        = string
-  default     = "devops-triple-pipeline"
+  default     = "todo-list-devops"
 }
 
 variable "environment" {

@@ -1,9 +1,9 @@
 # Script PowerShell para ejecutar localmente el Pipeline 3 (CD: Despliegue en Amazon ECS)
 param(
-    [string]$ClusterName = "devops-triple-pipeline-cluster",
-    [string]$BackendService = "devops-triple-pipeline-backend-service",
-    [string]$FrontendService = "devops-triple-pipeline-frontend-service",
-    [string]$ProjectName = "devops-triple-pipeline"
+    [string]$ClusterName = "todo-list-devops-cluster",
+    [string]$BackendService = "todo-list-devops-backend-service",
+    [string]$FrontendService = "todo-list-devops-frontend-service",
+    [string]$ProjectName = "todo-list-devops"
 )
 
 Write-Host "==========================================================" -ForegroundColor Cyan
