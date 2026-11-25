@@ -1,7 +1,9 @@
-// Configuración base de la API
-// Por defecto se asume que existe un reverse proxy / ALB que enruta /api hacia el backend.
-// Si se ejecuta en local o sin ALB, se puede cambiar a http://localhost:5000 o mediante el input en pantalla.
-let API_BASE_URL = localStorage.getItem('DEVOPS_API_URL') || '';
+// Configuración base de la API:
+// En AWS ALB se usa ruta relativa '/api'. En local (file:// o puertos de dev), apunta a http://localhost:5000 por defecto.
+const defaultLocalApi = (window.location.protocol === 'file:' || window.location.port === '8080' || window.location.port === '3000') 
+  ? 'http://localhost:5000' 
+  : '';
+let API_BASE_URL = localStorage.getItem('DEVOPS_API_URL') ?? defaultLocalApi;
 
 // DOM Elements
 const backendDot = document.getElementById('backend-dot');
