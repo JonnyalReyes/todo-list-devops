@@ -132,21 +132,21 @@ function renderTasks() {
   }
 
   todoList.innerHTML = filtered.map(task => `
-    <div class="task-item flex items-center justify-between p-3 rounded-xl border border-slate-200 group ${task.done ? 'task-completed bg-slate-50/60' : 'bg-white'}">
-      <label class="flex items-center gap-3 flex-1 cursor-pointer select-none">
+    <div class="task-item flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-slate-200 group ${task.done ? 'task-completed bg-slate-50/60' : 'bg-white'}">
+      <label class="flex items-center gap-2.5 sm:gap-3 flex-1 cursor-pointer select-none min-w-0 mr-2">
         <input 
           type="checkbox" 
           ${task.done ? 'checked' : ''} 
           onchange="toggleTask(${task.id}, this.checked)"
-          class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-0 cursor-pointer"
+          class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-0 cursor-pointer shrink-0"
         >
-        <span class="text-sm font-medium ${task.done ? 'text-slate-400' : 'text-slate-700'}">
+        <span class="text-xs sm:text-sm font-medium ${task.done ? 'text-slate-400' : 'text-slate-700'} break-words">
           ${escapeHtml(task.title)}
         </span>
       </label>
       <button 
         onclick="deleteTask(${task.id})" 
-        class="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg transition opacity-60 group-hover:opacity-100"
+        class="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition shrink-0 active:scale-90"
         title="Eliminar tarea"
       >
         <i class="fa-solid fa-trash-can text-xs"></i>
