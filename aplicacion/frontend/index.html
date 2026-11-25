@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps Portal - AWS ECS & Triple Pipeline</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- Header -->
+  <header class="bg-slate-800 border-b border-slate-700 shadow-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-gradient-to-tr from-amber-500 to-orange-600 rounded-lg shadow text-white">
+          <i class="fa-brands fa-aws text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-white tracking-wide">DevOps Cloud Control Panel</h1>
+          <p class="text-xs text-slate-400">AWS ECS Fargate &bull; Terraform &bull; Triple Pipeline CI/CD</p>
+        </div>
+      </div>
+
+      <!-- Quick status pill -->
+      <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-700">
+        <span id="backend-dot" class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse"></span>
+        <span id="backend-status-text" class="text-xs font-medium text-slate-300">Conectando con Backend...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+
+    <!-- Architecture & Pipelines Summary Cards -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-4 shadow-sm hover:border-amber-500/50 transition">
+        <div class="flex items-center justify-between text-amber-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Pipeline 1 &bull; IaC</span>
+          <i class="fa-solid fa-cubes text-lg"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Terraform Infraestructura</h3>
+        <p class="text-xs text-slate-400 mt-1">Aprovisionamiento de VPC, Subredes, ECR, ECS Fargate y Security Groups.</p>
+        <div class="mt-3 text-[11px] text-emerald-400 flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-check"></i> Automatizado con CI/CD
+        </div>
+      </div>
+
+      <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-4 shadow-sm hover:border-sky-500/50 transition">
+        <div class="flex items-center justify-between text-sky-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Pipeline 2 &bull; CI</span>
+          <i class="fa-brands fa-docker text-lg"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Build & ECR Push</h3>
+        <p class="text-xs text-slate-400 mt-1">Empaquetado en contenedores Docker y publicación segura en Amazon ECR.</p>
+        <div class="mt-3 text-[11px] text-sky-400 flex items-center gap-1.5">
+          <i class="fa-solid fa-arrows-rotate"></i> Imágenes versionadas por SHA
+        </div>
+      </div>
+
+      <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-4 shadow-sm hover:border-emerald-500/50 transition">
+        <div class="flex items-center justify-between text-emerald-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Pipeline 3 &bull; CD</span>
+          <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Despliegue a ECS</h3>
+        <p class="text-xs text-slate-400 mt-1">Actualización continua del servicio ECS Fargate con cero tiempo de inactividad.</p>
+        <div class="mt-3 text-[11px] text-emerald-400 flex items-center gap-1.5">
+          <i class="fa-solid fa-heart-pulse"></i> Health Checks verificados
+        </div>
+      </div>
+    </section>
+
+    <!-- ECS Live Metadata Bar -->
+    <section class="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-md">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-700/80">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-server text-indigo-400 text-lg"></i>
+          <h2 class="text-sm font-bold text-white tracking-wide uppercase">Telemetría de Contenedores en Vivo</h2>
+        </div>
+        <button id="btn-refresh" class="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate"></i> Actualizar
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400">Backend Hostname</span>
+          <p id="meta-hostname" class="text-sm font-mono font-semibold text-amber-400 truncate mt-1">Consultando...</p>
+        </div>
+        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400">Versión App</span>
+          <p id="meta-version" class="text-sm font-mono font-semibold text-sky-400 mt-1">1.0.0</p>
+        </div>
+        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400">Uptime Backend</span>
+          <p id="meta-uptime" class="text-sm font-mono font-semibold text-emerald-400 mt-1">-</p>
+        </div>
+        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400">Latencia API</span>
+          <p id="meta-latency" class="text-sm font-mono font-semibold text-purple-400 mt-1">- ms</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive CRUD Application (Communicating with Backend) -->
+    <section class="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-md space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-700/80">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-emerald-400"></i> Gestor de Tareas y Verificación del Proyecto
+          </h2>
+          <p class="text-xs text-slate-400">Demostración en vivo de comunicación API Frontend &harr; Backend en AWS ECS</p>
+        </div>
+        <span id="task-counter" class="text-xs font-semibold px-2.5 py-1 bg-slate-700 text-slate-300 rounded-full">0 tareas</span>
+      </div>
+
+      <!-- Add Task Form -->
+      <form id="task-form" class="flex gap-2">
+        <input 
+          id="task-input" 
+          type="text" 
+          placeholder="Escribe una nueva tarea o prueba para la demo..." 
+          class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+          required
+        >
+        <button 
+          type="submit" 
+          class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition flex items-center gap-2 shadow"
+        >
+          <i class="fa-solid fa-plus"></i> Agregar
+        </button>
+      </form>
+
+      <!-- Task List Container -->
+      <div id="tasks-container" class="space-y-2">
+        <div class="text-center py-8 text-slate-500 text-sm">
+          <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-400"></i>
+          <p>Cargando tareas desde el backend...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- API Config Drawer (helpful for local vs AWS ALB configuration) -->
+    <section class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-plug text-slate-400"></i>
+        <span>Endpoint API configurado: <strong id="current-api-url" class="text-slate-200 font-mono">/api</strong></span>
+      </div>
+      <div class="flex items-center gap-2">
+        <input 
+          id="custom-api-input" 
+          type="text" 
+          placeholder="Cambiar URL de backend si es necesario" 
+          class="bg-slate-900 border border-slate-700 px-3 py-1 rounded text-xs text-slate-200 w-64 focus:outline-none focus:border-indigo-500"
+        >
+        <button id="btn-save-api" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-xs transition">
+          Aplicar
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-slate-800/80 border-t border-slate-700 py-4 text-center text-xs text-slate-400">
+    <div class="max-w-6xl mx-auto px-4 flex flex-wrap justify-between items-center gap-2">
+      <p>Proyecto Final: Tres Pipelines DevOps en AWS &bull; UTP</p>
+      <p class="text-slate-500">Ejecutado en Amazon ECS (AWS Fargate)</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

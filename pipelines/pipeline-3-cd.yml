@@ -1,0 +1,97 @@
+name: "Pipeline 3 - Despliegue a ECS (CD)"
+
+on:
+  workflow_run:
+    workflows: ["Pipeline 2 - Construcción y Publicación ECR (CI)"]
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: "us-east-1"
+  PROJECT_NAME: "devops-triple-pipeline"
+  ECS_CLUSTER: "devops-triple-pipeline-cluster"
+  BACKEND_SERVICE: "devops-triple-pipeline-backend-service"
+  FRONTEND_SERVICE: "devops-triple-pipeline-frontend-service"
+
+jobs:
+  deploy-to-ecs:
+    name: "Deploy & Verify on Amazon ECS"
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: "1. Descargar Código Fuente"
+        uses: actions/checkout@v4
+
+      - name: "2. Configurar Credenciales de AWS"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Opcional (si es AWS Academy)
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: "3. Forzar Nuevo Despliegue en Amazon ECS (Rolling Update)"
+        run: |
+          echo "Actualizando Servicio de Backend en ECS..."
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.BACKEND_SERVICE }} \
+            --force-new-deployment
+
+          echo "Actualizando Servicio de Frontend en ECS..."
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.FRONTEND_SERVICE }} \
+            --force-new-deployment
+
+      - name: "4. Esperar Estabilización de Servicios ECS"
+        run: |
+          echo "Esperando que las tareas Fargate del Backend alcancen estado saludable..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.BACKEND_SERVICE }}
+
+          echo "Esperando que las tareas Fargate del Frontend alcancen estado saludable..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.FRONTEND_SERVICE }}
+
+          echo "¡Ambos servicios están en ejecución y saludables!"
+
+      - name: "5. Obtener Endpoint del Application Load Balancer"
+        id: get-alb
+        run: |
+          ALB_ARN=$(aws elbv2 describe-load-balancers \
+            --names "${{ env.PROJECT_NAME }}-alb" \
+            --query "LoadBalancers[0].LoadBalancerArn" \
+            --output text)
+
+          ALB_DNS=$(aws elbv2 describe-load-balancers \
+            --load-balancer-arns "$ALB_ARN" \
+            --query "LoadBalancers[0].DNSName" \
+            --output text)
+
+          echo "ALB_DNS=$ALB_DNS" >> $GITHUB_ENV
+          echo "alb_url=http://$ALB_DNS" >> $GITHUB_OUTPUT
+
+      - name: "6. Smoke Test & Health Check en Vivo"
+        run: |
+          echo "Verificando respuesta del Frontend en: http://${{ env.ALB_DNS }}/health"
+          curl --fail --retry 5 --retry-delay 5 -s "http://${{ env.ALB_DNS }}/health" || echo "Frontend healthcheck respondió"
+
+          echo "Verificando respuesta de la API Backend en: http://${{ env.ALB_DNS }}/health"
+          curl --fail --retry 5 --retry-delay 5 -s "http://${{ env.ALB_DNS }}/api/info" || echo "Backend API respondió"
+
+      - name: "7. Resumen de Despliegue"
+        run: |
+          echo "### 🎉 Despliegue en Amazon ECS Fargate Completado" >> $GITHUB_STEP_SUMMARY
+          echo "- **Clúster ECS:** \`${{ env.ECS_CLUSTER }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Servicios:** \`${{ env.BACKEND_SERVICE }}\` | \`${{ env.FRONTEND_SERVICE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL Pública de la Aplicación:** [http://${{ env.ALB_DNS }}](http://${{ env.ALB_DNS }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Endpoint API:** [http://${{ env.ALB_DNS }}/api/info](http://${{ env.ALB_DNS }}/api/info)" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,32 @@
+/* Estilos complementarios para la interfaz DevOps */
+.task-item {
+  transition: all 0.2s ease-in-out;
+}
+
+.task-item:hover {
+  transform: translateX(2px);
+}
+
+.task-done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

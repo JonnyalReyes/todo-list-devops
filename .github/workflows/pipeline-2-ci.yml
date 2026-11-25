@@ -1,0 +1,81 @@
+name: "Pipeline 2 - Construcción y Publicación ECR (CI)"
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'aplicacion/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: "us-east-1"
+  PROJECT_NAME: "devops-triple-pipeline"
+
+jobs:
+  build-and-push:
+    name: "Build Docker & Push to Amazon ECR"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "1. Descargar Código Fuente"
+        uses: actions/checkout@v4
+
+      - name: "2. Configurar Credenciales de AWS"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Opcional (si es AWS Academy)
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: "3. Iniciar Sesión en Amazon ECR"
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: "4. Definir Variables de Imágenes ECR"
+        run: |
+          REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+          BACKEND_REPO="${{ env.PROJECT_NAME }}-backend"
+          FRONTEND_REPO="${{ env.PROJECT_NAME }}-frontend"
+          IMAGE_TAG="${{ github.sha }}"
+
+          echo "ECR_REGISTRY=$REGISTRY" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE_LATEST=$REGISTRY/$BACKEND_REPO:latest" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE_SHA=$REGISTRY/$BACKEND_REPO:$IMAGE_TAG" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE_LATEST=$REGISTRY/$FRONTEND_REPO:latest" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE_SHA=$REGISTRY/$FRONTEND_REPO:$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: "5. Construir y Publicar Imagen del Backend"
+        run: |
+          echo "Construyendo imagen Docker para Backend..."
+          docker build \
+            -t ${{ env.BACKEND_IMAGE_LATEST }} \
+            -t ${{ env.BACKEND_IMAGE_SHA }} \
+            aplicacion/backend
+
+          echo "Publicando imagen Backend a Amazon ECR..."
+          docker push ${{ env.BACKEND_IMAGE_LATEST }}
+          docker push ${{ env.BACKEND_IMAGE_SHA }}
+
+      - name: "6. Construir y Publicar Imagen del Frontend"
+        run: |
+          echo "Construyendo imagen Docker para Frontend..."
+          docker build \
+            -t ${{ env.FRONTEND_IMAGE_LATEST }} \
+            -t ${{ env.FRONTEND_IMAGE_SHA }} \
+            aplicacion/frontend
+
+          echo "Publicando imagen Frontend a Amazon ECR..."
+          docker push ${{ env.FRONTEND_IMAGE_LATEST }}
+          docker push ${{ env.FRONTEND_IMAGE_SHA }}
+
+      - name: "7. Resumen de Publicación en ECR"
+        run: |
+          echo "### 📦 Imágenes Docker Publicadas en Amazon ECR" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend:** \`${{ env.BACKEND_IMAGE_SHA }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** \`${{ env.FRONTEND_IMAGE_SHA }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag Latest:** Actualizado exitosamente." >> $GITHUB_STEP_SUMMARY

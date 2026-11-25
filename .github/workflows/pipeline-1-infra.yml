@@ -1,0 +1,83 @@
+name: "Pipeline 1 - Infraestructura (Terraform)"
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'terraform/**'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Acción de Terraform a ejecutar'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - apply
+          - plan
+          - destroy
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: "us-east-1"
+  TF_WORKING_DIR: "terraform"
+
+jobs:
+  terraform:
+    name: "Aprovisionamiento de Infraestructura"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "1. Descargar Código Fuente"
+        uses: actions/checkout@v4
+
+      - name: "2. Configurar Credenciales de AWS"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Opcional (si es AWS Academy)
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: "3. Instalar Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: "4. Verificar Formato (fmt)"
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform fmt -check
+
+      - name: "5. Inicializar Terraform (init)"
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      - name: "6. Validar Sintaxis (validate)"
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate -no-color
+
+      - name: "7. Generar Plan de Ejecución (plan)"
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan -no-color -out=tfplan
+
+      - name: "8. Aplicar Cambios (apply)"
+        if: ${{ github.event_name == 'push' || github.event.inputs.action == 'apply' }}
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -no-color -auto-approve tfplan
+
+      - name: "9. Destruir Infraestructura (destroy)"
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' }}
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform destroy -no-color -auto-approve
+
+      - name: "10. Publicar Outputs en el Resumen del Job"
+        if: ${{ github.event_name == 'push' || github.event.inputs.action == 'apply' }}
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          echo "### 🚀 Infraestructura Aprovisionada con Éxito" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          terraform output >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

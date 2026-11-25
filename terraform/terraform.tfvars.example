@@ -1,0 +1,25 @@
+# ==========================================================
+# Archivo de variables de ejemplo para Terraform
+# Renombrar a terraform.tfvars para ejecucion local
+# ==========================================================
+
+aws_region   = "us-east-1"
+project_name = "devops-triple-pipeline"
+environment  = "production"
+
+# Configuracion de red
+vpc_cidr            = "10.0.0.0/16"
+public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+
+# Dimensionamiento de contenedores Fargate (valores optimizados para ahorro de costos)
+backend_cpu            = 256
+backend_memory         = 512
+backend_desired_count  = 1
+
+frontend_cpu           = 256
+frontend_memory        = 512
+frontend_desired_count = 1
+
+# Si utilizas una cuenta de AWS Academy / Learner Lab, cambia esto a true y especifica el ARN del LabRole:
+use_aws_academy_lab_role = false
+# aws_academy_lab_role_arn = "arn:aws:iam::123456789012:role/LabRole"
