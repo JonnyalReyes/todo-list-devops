@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TaskFlow Pro &bull; Gestor de Tareas y Notas</title>
+  <title>TaskFlow Pro &bull; Tareas, Notas & Mini Tareas</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
@@ -25,7 +25,7 @@
         </div>
         <div>
           <h1 class="text-base font-bold text-slate-800 tracking-tight leading-none">TaskFlow Pro</h1>
-          <p class="text-[11px] text-slate-400 font-medium mt-0.5">Notas & Tareas en AWS</p>
+          <p class="text-[11px] text-slate-400 font-medium mt-0.5">Notas, Mini Tareas & AWS</p>
         </div>
       </div>
       <!-- Botón cerrar sidebar en móvil -->
@@ -49,7 +49,7 @@
           <span id="badge-all-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">0</span>
         </button>
 
-        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="pending">
+        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="status-pendiente">
           <span class="flex items-center gap-2.5">
             <i class="fa-solid fa-clock text-amber-500 w-4 text-center"></i>
             <span>Pendientes</span>
@@ -57,7 +57,15 @@
           <span id="badge-pending-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">0</span>
         </button>
 
-        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="completed">
+        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="status-en_curso">
+          <span class="flex items-center gap-2.5">
+            <i class="fa-solid fa-spinner fa-spin-pulse text-sky-500 w-4 text-center"></i>
+            <span>En Curso</span>
+          </span>
+          <span id="badge-in-progress-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-600">0</span>
+        </button>
+
+        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="status-completado">
           <span class="flex items-center gap-2.5">
             <i class="fa-solid fa-circle-check text-emerald-500 w-4 text-center"></i>
             <span>Completadas</span>
@@ -90,7 +98,7 @@
 
         <!-- Lista dinámica de carpetas -->
         <div id="folders-list" class="space-y-0.5">
-          <!-- Renderizado dinámicamente desde app.js -->
+          <!-- Renderizado dinámico desde app.js -->
         </div>
       </div>
 
@@ -98,7 +106,6 @@
 
     <!-- Footer del Sidebar con Botón DevOps y Estado -->
     <div class="p-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
-      <!-- Botón de Telemetría DevOps -->
       <button 
         id="btn-open-devops" 
         class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition shadow-xs group"
@@ -112,7 +119,7 @@
 
       <div class="flex justify-between items-center px-1 text-[10px] text-slate-400">
         <span>UTP &bull; Tópicos Especiales 1</span>
-        <span class="font-mono">v2.0</span>
+        <span class="font-mono">v2.1</span>
       </div>
     </div>
   </aside>
@@ -126,25 +133,25 @@
   <div class="flex-1 md:ml-72 flex flex-col min-h-screen min-w-0">
     
     <!-- Topbar Header -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 shadow-xs">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-20 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3 shadow-xs">
       
       <!-- Botón Menú Móvil + Título de la Vista Actual -->
-      <div class="flex items-center gap-3 min-w-0">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
         <button id="btn-toggle-sidebar" class="md:hidden text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
           <i class="fa-solid fa-bars text-lg"></i>
         </button>
         <div class="min-w-0">
-          <h2 id="current-view-title" class="text-base sm:text-lg font-bold text-slate-800 tracking-tight truncate flex items-center gap-2">
-            <i class="fa-solid fa-inbox text-indigo-600 text-sm"></i>
+          <h2 id="current-view-title" class="text-sm sm:text-lg font-bold text-slate-800 tracking-tight truncate flex items-center gap-2">
+            <i class="fa-solid fa-inbox text-indigo-600 text-xs sm:text-sm"></i>
             <span>Todas las tareas</span>
           </h2>
-          <p id="current-view-subtitle" class="text-xs text-slate-400 hidden sm:block">Organiza, clasifica y gestiona tus actividades</p>
+          <p id="current-view-subtitle" class="text-[11px] text-slate-400 hidden sm:block">Gestiona tus tareas, notas y sub-pasos</p>
         </div>
       </div>
 
       <!-- Barra de búsqueda rápida -->
       <div class="flex items-center gap-2">
-        <div class="relative w-36 sm:w-64">
+        <div class="relative w-32 sm:w-64">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
           <input 
             id="search-input" 
@@ -156,7 +163,7 @@
 
         <button 
           id="btn-quick-new-task" 
-          class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-indigo-100 transition shrink-0"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-indigo-100 transition shrink-0 active:scale-95"
         >
           <i class="fa-solid fa-plus text-xs"></i>
           <span class="hidden sm:inline">Nueva Tarea</span>
@@ -168,8 +175,8 @@
     <!-- Contenido de la Página -->
     <main class="flex-1 p-3 sm:p-6 max-w-4xl w-full mx-auto space-y-4">
 
-      <!-- Formulario para agregar Tarea / Nota con selector de Carpeta y Prioridad -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-3">
+      <!-- Formulario para Crear Tarea / Nota -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-5 shadow-xs space-y-3">
         <form id="create-task-form" class="space-y-3">
           
           <!-- Fila principal: Título y Botón Agregar -->
@@ -177,7 +184,7 @@
             <input 
               id="task-title-input" 
               type="text" 
-              placeholder="Escribe el título de tu tarea o nota..." 
+              placeholder="¿Qué tienes pendiente por hacer?..." 
               class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition"
               required
             >
@@ -186,34 +193,55 @@
               class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs shrink-0"
             >
               <i class="fa-solid fa-plus"></i>
-              <span>Guardar Tarea</span>
+              <span>Agregar Tarea</span>
             </button>
           </div>
 
-          <!-- Fila de opciones: Descripción, Carpeta y Prioridad -->
+          <!-- Fila de opciones: Carpeta, Prioridad, Estado y Fecha de Vencimiento -->
           <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
             
             <!-- Selector de Carpeta -->
             <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
               <i class="fa-solid fa-folder text-slate-400 text-xs"></i>
-              <span class="text-slate-500 font-medium">Carpeta:</span>
-              <select id="task-folder-select" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer">
-                <!-- Se llena dinámicamente -->
+              <span class="text-slate-500 font-medium hidden sm:inline">Carpeta:</span>
+              <select id="task-folder-select" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer text-xs">
+                <!-- Llenado dinámico -->
+              </select>
+            </div>
+
+            <!-- Selector de Estado Inicial -->
+            <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
+              <i class="fa-solid fa-bars-progress text-slate-400 text-xs"></i>
+              <span class="text-slate-500 font-medium hidden sm:inline">Estado:</span>
+              <select id="task-status-select" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer text-xs">
+                <option value="pendiente">Pendiente ⏳</option>
+                <option value="en_curso">En Curso 🚀</option>
+                <option value="completado">Completado ✅</option>
               </select>
             </div>
 
             <!-- Selector de Prioridad -->
             <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
               <i class="fa-solid fa-flag text-slate-400 text-xs"></i>
-              <span class="text-slate-500 font-medium">Prioridad:</span>
-              <select id="task-priority-select" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer">
-                <option value="media">Media</option>
-                <option value="alta">Alta 🔥</option>
-                <option value="baja">Baja</option>
+              <select id="task-priority-select" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer text-xs">
+                <option value="media">Prioridad Media</option>
+                <option value="alta">Prioridad Alta 🔥</option>
+                <option value="baja">Prioridad Baja</option>
               </select>
             </div>
 
-            <!-- Botón para mostrar campo de Descripción / Notas -->
+            <!-- Fecha de Vencimiento -->
+            <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+              <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
+              <span class="text-slate-500 font-medium text-[11px] hidden sm:inline">Vence:</span>
+              <input 
+                id="task-due-date-input" 
+                type="date" 
+                class="bg-transparent text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
+              >
+            </div>
+
+            <!-- Botón expandir descripción -->
             <button 
               type="button" 
               id="btn-toggle-description" 
@@ -239,10 +267,11 @@
       <!-- Barra de Filtro de Estado & Contador -->
       <div class="flex justify-between items-center px-1 text-xs text-slate-500">
         <div class="flex items-center gap-1.5">
-          <span class="font-semibold text-slate-700" id="filter-display-label">Todas las notas</span>
+          <span class="font-semibold text-slate-700" id="filter-display-label">Todas las tareas</span>
           <span class="text-slate-300">&bull;</span>
           <span id="status-task-count" class="font-medium">0 tareas</span>
         </div>
+        <p class="text-[11px] text-slate-400 hidden sm:block"><i class="fa-regular fa-hand-pointer mr-1"></i>Haz clic en cualquier tarea para editarla o gestionar sus mini tareas</p>
       </div>
 
       <!-- Lista de Tareas / Notas -->
@@ -255,6 +284,168 @@
 
     </main>
 
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- MODAL: DETALLE Y EDICIÓN COMPLETA DE TAREA (MINI TAREAS)   -->
+  <!-- ========================================================== -->
+  <div id="modal-task-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-fadeIn my-auto flex flex-col max-h-[90vh]">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/70">
+        <div class="flex items-center gap-2">
+          <span id="detail-status-pill" class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+            Pendiente
+          </span>
+          <span id="detail-priority-pill" class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-200 text-slate-700">
+            Media
+          </span>
+        </div>
+        <button id="btn-close-detail-modal" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Desplazable) -->
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs">
+        
+        <!-- Título Editable -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-1">Título de la Tarea:</label>
+          <input 
+            id="detail-title-input" 
+            type="text" 
+            class="w-full text-base sm:text-lg font-bold text-slate-800 border-b border-slate-200 focus:border-indigo-600 pb-1.5 focus:outline-none transition bg-transparent"
+            placeholder="Título..."
+          >
+        </div>
+
+        <!-- Barra de Configuración de la Tarea (Estado, Carpeta, Prioridad, Fecha de Vencimiento) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+          
+          <!-- Estado -->
+          <div>
+            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Estado:</label>
+            <select id="detail-status-select" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500">
+              <option value="pendiente">⏳ Pendiente</option>
+              <option value="en_curso">🚀 En Curso</option>
+              <option value="completado">✅ Completado</option>
+            </select>
+          </div>
+
+          <!-- Carpeta -->
+          <div>
+            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Carpeta:</label>
+            <select id="detail-folder-select" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500">
+              <!-- Opciones dinámicas -->
+            </select>
+          </div>
+
+          <!-- Prioridad -->
+          <div>
+            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Prioridad:</label>
+            <select id="detail-priority-select" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500">
+              <option value="alta">🔥 Alta</option>
+              <option value="media">Media</option>
+              <option value="baja">Baja</option>
+            </select>
+          </div>
+
+          <!-- Fecha de Vencimiento -->
+          <div>
+            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Fecha de Vencimiento:</label>
+            <input 
+              id="detail-due-date-input" 
+              type="date" 
+              class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500"
+            >
+          </div>
+
+        </div>
+
+        <!-- Descripción / Notas -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-1.5">Descripción & Notas:</label>
+          <textarea 
+            id="detail-desc-input" 
+            rows="3" 
+            placeholder="Escribe notas, observaciones o detalles sobre esta tarea..." 
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 focus:bg-white focus:border-indigo-500 focus:outline-none transition"
+          ></textarea>
+        </div>
+
+        <!-- SECCIÓN: MINI TAREAS (SUBTASKS) -->
+        <div class="space-y-3 pt-2 border-t border-slate-100">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-indigo-600"></i>
+              <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Mini Tareas / Pasos</h4>
+            </div>
+            <span id="detail-subtasks-progress-text" class="text-[11px] font-semibold text-slate-500">0/0 completadas</span>
+          </div>
+
+          <!-- Barra de Progreso de Mini Tareas -->
+          <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+            <div id="detail-subtasks-progress-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style="width: 0%;"></div>
+          </div>
+
+          <!-- Lista de Mini Tareas Existentes -->
+          <div id="detail-subtasks-list" class="space-y-1.5">
+            <!-- Renderizado dinámicamente -->
+          </div>
+
+          <!-- Formulario para Agregar Nueva Mini Tarea -->
+          <div class="flex gap-2 pt-1">
+            <input 
+              id="new-subtask-input" 
+              type="text" 
+              placeholder="Escribe una nueva mini tarea o paso..." 
+              class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:bg-white focus:border-indigo-500 focus:outline-none"
+            >
+            <button 
+              type="button" 
+              id="btn-add-subtask" 
+              class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shrink-0"
+            >
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Agregar</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 sm:p-4 border-t border-slate-100 bg-slate-50/70 flex justify-between items-center">
+        <button 
+          type="button" 
+          id="btn-delete-task-modal" 
+          class="text-xs text-rose-600 hover:text-rose-800 font-semibold flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-rose-50 transition"
+        >
+          <i class="fa-solid fa-trash-can"></i>
+          <span>Eliminar Tarea</span>
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button 
+            type="button" 
+            id="btn-close-detail-modal-btn" 
+            class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs rounded-xl transition"
+          >
+            Cerrar
+          </button>
+          <button 
+            type="button" 
+            id="btn-save-task-detail" 
+            class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-xs transition"
+          >
+            Guardar Cambios
+          </button>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <!-- ========================================================== -->

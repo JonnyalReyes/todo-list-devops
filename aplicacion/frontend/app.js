@@ -7,10 +7,13 @@ let API_BASE_URL = localStorage.getItem('DEVOPS_API_URL') ?? defaultLocalApi;
 // Estado Global
 let allFolders = [];
 let allTasks = [];
-let currentView = 'all'; // 'all', 'pending', 'completed', 'priority-high', o 'folder-<id>'
+let currentView = 'all'; // 'all', 'status-pendiente', 'status-en_curso', 'status-completado', 'priority-high', o 'folder-<id>'
 let activeFolderId = null;
 let searchTerm = '';
 let selectedFolderColor = '#4f46e5';
+
+// Tarea activa en el modal de edición detallada
+let activeEditingTask = null;
 
 // DOM Elements - Sidebar & Layout
 const sidebar = document.getElementById('sidebar');
@@ -25,22 +28,45 @@ const searchInput = document.getElementById('search-input');
 const foldersList = document.getElementById('folders-list');
 const tasksContainer = document.getElementById('tasks-container');
 
-// Badges de conteo
+// Badges de conteo en Sidebar
 const badgeAllCount = document.getElementById('badge-all-count');
 const badgePendingCount = document.getElementById('badge-pending-count');
+const badgeInProgressCount = document.getElementById('badge-in-progress-count');
 const badgeCompletedCount = document.getElementById('badge-completed-count');
 const badgeHighCount = document.getElementById('badge-high-count');
 
-// DOM Elements - Formulario de Tarea
+// DOM Elements - Formulario Rápido de Tarea
 const createTaskForm = document.getElementById('create-task-form');
 const taskTitleInput = document.getElementById('task-title-input');
 const taskFolderSelect = document.getElementById('task-folder-select');
+const taskStatusSelect = document.getElementById('task-status-select');
 const taskPrioritySelect = document.getElementById('task-priority-select');
+const taskDueDateInput = document.getElementById('task-due-date-input');
 const taskDescInput = document.getElementById('task-desc-input');
 const btnToggleDescription = document.getElementById('btn-toggle-description');
 const descriptionFieldContainer = document.getElementById('description-field-container');
 const descToggleText = document.getElementById('desc-toggle-text');
 const btnQuickNewTask = document.getElementById('btn-quick-new-task');
+
+// DOM Elements - Modal Detalle & Edición de Tarea (Mini Tareas)
+const modalTaskDetail = document.getElementById('modal-task-detail');
+const btnCloseDetailModal = document.getElementById('btn-close-detail-modal');
+const btnCloseDetailModalBtn = document.getElementById('btn-close-detail-modal-btn');
+const btnSaveTaskDetail = document.getElementById('btn-save-task-detail');
+const btnDeleteTaskModal = document.getElementById('btn-delete-task-modal');
+const detailStatusPill = document.getElementById('detail-status-pill');
+const detailPriorityPill = document.getElementById('detail-priority-pill');
+const detailTitleInput = document.getElementById('detail-title-input');
+const detailStatusSelect = document.getElementById('detail-status-select');
+const detailFolderSelect = document.getElementById('detail-folder-select');
+const detailPrioritySelect = document.getElementById('detail-priority-select');
+const detailDueDateInput = document.getElementById('detail-due-date-input');
+const detailDescInput = document.getElementById('detail-desc-input');
+const detailSubtasksList = document.getElementById('detail-subtasks-list');
+const detailSubtasksProgressText = document.getElementById('detail-subtasks-progress-text');
+const detailSubtasksProgressBar = document.getElementById('detail-subtasks-progress-bar');
+const newSubtaskInput = document.getElementById('new-subtask-input');
+const btnAddSubtask = document.getElementById('btn-add-subtask');
 
 // DOM Elements - Modal Crear Carpeta
 const modalNewFolder = document.getElementById('modal-new-folder');
@@ -83,9 +109,7 @@ btnToggleSidebar.addEventListener('click', openSidebar);
 btnCloseSidebar.addEventListener('click', closeSidebar);
 sidebarOverlay.addEventListener('click', closeSidebar);
 
-// ==========================================================
-// EXPANDIR / COLAPSAR DESCRIPCIÓN DE TAREA
-// ==========================================================
+// Expandir / Ocultar descripción en creación rápida
 let descExpanded = false;
 btnToggleDescription.addEventListener('click', () => {
   descExpanded = !descExpanded;
@@ -105,7 +129,225 @@ btnQuickNewTask.addEventListener('click', () => {
 });
 
 // ==========================================================
-// MODAL DE CARPETA
+// MODAL DETALLE / EDICIÓN COMPLETA DE TAREA (MINI TAREAS)
+// ==========================================================
+function openTaskDetailModal(taskId) {
+  const task = allTasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  // Clonar para edición en memoria
+  activeEditingTask = JSON.parse(JSON.stringify(task));
+  if (!Array.isArray(activeEditingTask.subtasks)) {
+    activeEditingTask.subtasks = [];
+  }
+
+  // Cargar datos en los inputs del modal
+  detailTitleInput.value = activeEditingTask.title || '';
+  detailDescInput.value = activeEditingTask.description || '';
+  detailStatusSelect.value = activeEditingTask.status || 'pendiente';
+  detailPrioritySelect.value = activeEditingTask.priority || 'media';
+  detailDueDateInput.value = activeEditingTask.dueDate || '';
+  newSubtaskInput.value = '';
+
+  // Actualizar opciones del selector de carpetas
+  detailFolderSelect.innerHTML = allFolders.map(f => `
+    <option value="${f.id}" ${activeEditingTask.folderId === f.id ? 'selected' : ''}>
+      ${escapeHtml(f.name)}
+    </option>
+  `).join('');
+
+  updateDetailBadges();
+  renderModalSubtasks();
+
+  modalTaskDetail.classList.remove('hidden');
+}
+
+function closeTaskDetailModal() {
+  modalTaskDetail.classList.add('hidden');
+  activeEditingTask = null;
+}
+
+btnCloseDetailModal.addEventListener('click', closeTaskDetailModal);
+btnCloseDetailModalBtn.addEventListener('click', closeTaskDetailModal);
+modalTaskDetail.addEventListener('click', (e) => {
+  if (e.target === modalTaskDetail) closeTaskDetailModal();
+});
+
+// Actualizar badges visuales en el modal según selección
+function updateDetailBadges() {
+  const status = detailStatusSelect.value;
+  const priority = detailPrioritySelect.value;
+
+  if (status === 'completado') {
+    detailStatusPill.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800';
+    detailStatusPill.textContent = 'Completado ✅';
+  } else if (status === 'en_curso') {
+    detailStatusPill.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800';
+    detailStatusPill.textContent = 'En Curso 🚀';
+  } else {
+    detailStatusPill.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800';
+    detailStatusPill.textContent = 'Pendiente ⏳';
+  }
+
+  if (priority === 'alta') {
+    detailPriorityPill.className = 'px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700';
+    detailPriorityPill.textContent = 'Prioridad Alta 🔥';
+  } else if (priority === 'media') {
+    detailPriorityPill.className = 'px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700';
+    detailPriorityPill.textContent = 'Prioridad Media';
+  } else {
+    detailPriorityPill.className = 'px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200 text-slate-600';
+    detailPriorityPill.textContent = 'Prioridad Baja';
+  }
+}
+
+detailStatusSelect.addEventListener('change', updateDetailBadges);
+detailPrioritySelect.addEventListener('change', updateDetailBadges);
+
+// Renderizar mini tareas dentro del modal
+function renderModalSubtasks() {
+  if (!activeEditingTask) return;
+  const subtasks = activeEditingTask.subtasks || [];
+  const total = subtasks.length;
+  const completed = subtasks.filter(st => st.done).length;
+  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  detailSubtasksProgressText.textContent = `${completed}/${total} completadas (${percentage}%)`;
+  detailSubtasksProgressBar.style.width = `${percentage}%`;
+  detailSubtasksProgressBar.className = percentage === 100 
+    ? 'bg-emerald-500 h-1.5 rounded-full transition-all duration-300' 
+    : 'bg-indigo-600 h-1.5 rounded-full transition-all duration-300';
+
+  if (subtasks.length === 0) {
+    detailSubtasksList.innerHTML = `
+      <p class="text-[11px] text-slate-400 italic py-2">No hay mini tareas aún. Agrega una abajo para dividir esta tarea en pasos.</p>
+    `;
+    return;
+  }
+
+  detailSubtasksList.innerHTML = subtasks.map((st, index) => `
+    <div class="subtask-item flex items-center justify-between p-2 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition group ${st.done ? 'subtask-completed' : ''}">
+      <label class="flex items-center gap-2.5 flex-1 cursor-pointer select-none min-w-0 mr-2">
+        <input 
+          type="checkbox" 
+          ${st.done ? 'checked' : ''} 
+          onchange="toggleModalSubtask(${index}, this.checked)"
+          class="w-3.5 h-3.5 rounded text-indigo-600 border-slate-300 focus:ring-0 cursor-pointer shrink-0"
+        >
+        <span class="text-xs font-medium ${st.done ? 'text-slate-400' : 'text-slate-700'} break-words">
+          ${escapeHtml(st.title)}
+        </span>
+      </label>
+      <button 
+        type="button" 
+        onclick="deleteModalSubtask(${index})" 
+        class="text-slate-300 hover:text-rose-500 p-1 rounded transition opacity-0 group-hover:opacity-100 shrink-0"
+        title="Eliminar mini tarea"
+      >
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+// Toggle subtask inside modal
+window.toggleModalSubtask = function(index, done) {
+  if (activeEditingTask && activeEditingTask.subtasks[index]) {
+    activeEditingTask.subtasks[index].done = done;
+    renderModalSubtasks();
+  }
+};
+
+// Delete subtask inside modal
+window.deleteModalSubtask = function(index) {
+  if (activeEditingTask && activeEditingTask.subtasks) {
+    activeEditingTask.subtasks.splice(index, 1);
+    renderModalSubtasks();
+  }
+};
+
+// Add subtask inside modal
+function handleAddSubtask() {
+  const text = newSubtaskInput.value.trim();
+  if (!text || !activeEditingTask) return;
+
+  const newId = activeEditingTask.subtasks.length > 0 
+    ? Math.max(...activeEditingTask.subtasks.map(s => s.id || 0)) + 1 
+    : 1;
+
+  activeEditingTask.subtasks.push({
+    id: newId,
+    title: text,
+    done: false
+  });
+
+  newSubtaskInput.value = '';
+  renderModalSubtasks();
+  newSubtaskInput.focus();
+}
+
+btnAddSubtask.addEventListener('click', handleAddSubtask);
+newSubtaskInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    handleAddSubtask();
+  }
+});
+
+// Guardar cambios del modal en el Backend
+btnSaveTaskDetail.addEventListener('click', async () => {
+  if (!activeEditingTask) return;
+  const newTitle = detailTitleInput.value.trim();
+  if (!newTitle) {
+    alert('El título de la tarea no puede estar vacío.');
+    return;
+  }
+
+  const updatedPayload = {
+    title: newTitle,
+    description: detailDescInput.value.trim(),
+    status: detailStatusSelect.value,
+    folderId: detailFolderSelect.value,
+    priority: detailPrioritySelect.value,
+    dueDate: detailDueDateInput.value || null,
+    subtasks: activeEditingTask.subtasks
+  };
+
+  btnSaveTaskDetail.disabled = true;
+  btnSaveTaskDetail.textContent = 'Guardando...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/tasks/${activeEditingTask.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedPayload)
+    });
+
+    if (!res.ok) throw new Error('Error al actualizar tarea');
+
+    closeTaskDetailModal();
+    await fetchTasks();
+    await fetchFolders();
+  } catch (err) {
+    alert('No se pudieron guardar los cambios. Revisa la conexión.');
+  } finally {
+    btnSaveTaskDetail.disabled = false;
+    btnSaveTaskDetail.textContent = 'Guardar Cambios';
+  }
+});
+
+// Eliminar tarea desde el modal
+btnDeleteTaskModal.addEventListener('click', async () => {
+  if (!activeEditingTask) return;
+  if (!confirm(`¿Eliminar la tarea "${activeEditingTask.title}"?`)) return;
+
+  const id = activeEditingTask.id;
+  closeTaskDetailModal();
+  await deleteTask(id);
+});
+
+// ==========================================================
+// MODAL DE CARPETAS
 // ==========================================================
 function openFolderModal() {
   modalNewFolder.classList.remove('hidden');
@@ -124,7 +366,6 @@ modalNewFolder.addEventListener('click', (e) => {
   if (e.target === modalNewFolder) closeFolderModal();
 });
 
-// Selector de color para carpeta
 colorChoices.forEach(choice => {
   choice.addEventListener('click', () => {
     colorChoices.forEach(c => c.classList.remove('selected'));
@@ -151,13 +392,12 @@ createFolderForm.addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error('Error al crear carpeta');
     closeFolderModal();
     await fetchFolders();
-    // Cambiar a la carpeta recién creada
     const created = await res.json();
     if (created.data && created.data.id) {
       selectFolder(created.data.id);
     }
   } catch (err) {
-    alert('No se pudo crear la carpeta. Verifica la conexión con el servidor.');
+    alert('No se pudo crear la carpeta.');
   }
 });
 
@@ -236,7 +476,7 @@ btnSaveApi.addEventListener('click', () => {
 });
 
 // ==========================================================
-// OBTENER Y RENDERIZAR CARPETAS
+// CARPETAS
 // ==========================================================
 async function fetchFolders() {
   try {
@@ -295,7 +535,6 @@ window.selectFolder = function(folderId) {
   activeFolderId = folderId;
   currentView = `folder-${folderId}`;
 
-  // Actualizar clases activas en sidebar
   document.querySelectorAll('.nav-view-btn').forEach(btn => btn.classList.remove('active'));
   renderFoldersList();
 
@@ -309,7 +548,6 @@ window.selectFolder = function(folderId) {
     filterDisplayLabel.textContent = `Carpeta: ${folder.name}`;
   }
 
-  // Cerrar sidebar en móvil tras seleccionar
   closeSidebar();
   renderTasks();
 };
@@ -319,7 +557,7 @@ window.deleteFolder = async function(id, name) {
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/folders/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Error al eliminar carpeta');
+    if (!res.ok) throw new Error('Error al eliminar');
 
     if (activeFolderId === id) {
       activeFolderId = null;
@@ -335,7 +573,7 @@ window.deleteFolder = async function(id, name) {
 };
 
 // ==========================================================
-// VISTAS RÁPIDAS (Todas, Pendientes, Completadas, Prioridad Alta)
+// VISTAS RÁPIDAS
 // ==========================================================
 document.querySelectorAll('.nav-view-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -353,32 +591,35 @@ document.querySelectorAll('.nav-view-btn').forEach(btn => {
 
 function updateViewHeaders(view) {
   if (view === 'all') {
-    currentViewTitle.innerHTML = `<i class="fa-solid fa-inbox text-indigo-600 text-sm"></i><span>Todas las tareas</span>`;
+    currentViewTitle.innerHTML = `<i class="fa-solid fa-inbox text-indigo-600 text-xs sm:text-sm"></i><span>Todas las tareas</span>`;
     currentViewSubtitle.textContent = `Visualizando todo el registro de tareas y notas`;
     filterDisplayLabel.textContent = `Todas las tareas`;
-  } else if (view === 'pending') {
-    currentViewTitle.innerHTML = `<i class="fa-solid fa-clock text-amber-500 text-sm"></i><span>Tareas Pendientes</span>`;
+  } else if (view === 'status-pendiente') {
+    currentViewTitle.innerHTML = `<i class="fa-solid fa-clock text-amber-500 text-xs sm:text-sm"></i><span>Tareas Pendientes</span>`;
     currentViewSubtitle.textContent = `Tareas que requieren tu atención`;
-    filterDisplayLabel.textContent = `Pendientes`;
-  } else if (view === 'completed') {
-    currentViewTitle.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i><span>Tareas Completadas</span>`;
+    filterDisplayLabel.textContent = `Pendientes ⏳`;
+  } else if (view === 'status-en_curso') {
+    currentViewTitle.innerHTML = `<i class="fa-solid fa-spinner fa-spin-pulse text-sky-500 text-xs sm:text-sm"></i><span>Tareas En Curso</span>`;
+    currentViewSubtitle.textContent = `Actividades en progreso actualmente`;
+    filterDisplayLabel.textContent = `En Curso 🚀`;
+  } else if (view === 'status-completado') {
+    currentViewTitle.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 text-xs sm:text-sm"></i><span>Tareas Completadas</span>`;
     currentViewSubtitle.textContent = `Historial de actividades finalizadas`;
-    filterDisplayLabel.textContent = `Completadas`;
+    filterDisplayLabel.textContent = `Completadas ✅`;
   } else if (view === 'priority-high') {
-    currentViewTitle.innerHTML = `<i class="fa-solid fa-fire text-rose-500 text-sm"></i><span>Prioridad Alta</span>`;
+    currentViewTitle.innerHTML = `<i class="fa-solid fa-fire text-rose-500 text-xs sm:text-sm"></i><span>Prioridad Alta</span>`;
     currentViewSubtitle.textContent = `Tareas críticas y urgentes`;
-    filterDisplayLabel.textContent = `Alta Prioridad`;
+    filterDisplayLabel.textContent = `Alta Prioridad 🔥`;
   }
 }
 
-// Búsqueda en tiempo real
 searchInput.addEventListener('input', (e) => {
   searchTerm = e.target.value.trim().toLowerCase();
   renderTasks();
 });
 
 // ==========================================================
-// OBTENER Y RENDERIZAR TAREAS / NOTAS
+// TAREAS / NOTAS
 // ==========================================================
 async function fetchTasks() {
   try {
@@ -401,12 +642,14 @@ async function fetchTasks() {
 
 function updateBadges() {
   const allCount = allTasks.length;
-  const pendingCount = allTasks.filter(t => !t.done).length;
-  const completedCount = allTasks.filter(t => t.done).length;
-  const highCount = allTasks.filter(t => t.priority === 'alta' && !t.done).length;
+  const pendingCount = allTasks.filter(t => t.status === 'pendiente').length;
+  const inProgressCount = allTasks.filter(t => t.status === 'en_curso').length;
+  const completedCount = allTasks.filter(t => t.status === 'completado').length;
+  const highCount = allTasks.filter(t => t.priority === 'alta' && t.status !== 'completado').length;
 
   badgeAllCount.textContent = allCount;
   badgePendingCount.textContent = pendingCount;
+  badgeInProgressCount.textContent = inProgressCount;
   badgeCompletedCount.textContent = completedCount;
   badgeHighCount.textContent = highCount;
 }
@@ -415,10 +658,12 @@ function renderTasks() {
   let filtered = [...allTasks];
 
   // Filtro por Vista o Carpeta
-  if (currentView === 'pending') {
-    filtered = filtered.filter(t => !t.done);
-  } else if (currentView === 'completed') {
-    filtered = filtered.filter(t => t.done);
+  if (currentView === 'status-pendiente') {
+    filtered = filtered.filter(t => t.status === 'pendiente');
+  } else if (currentView === 'status-en_curso') {
+    filtered = filtered.filter(t => t.status === 'en_curso');
+  } else if (currentView === 'status-completado') {
+    filtered = filtered.filter(t => t.status === 'completado');
   } else if (currentView === 'priority-high') {
     filtered = filtered.filter(t => t.priority === 'alta');
   } else if (currentView.startsWith('folder-')) {
@@ -430,7 +675,8 @@ function renderTasks() {
   if (searchTerm) {
     filtered = filtered.filter(t => 
       t.title.toLowerCase().includes(searchTerm) || 
-      (t.description && t.description.toLowerCase().includes(searchTerm))
+      (t.description && t.description.toLowerCase().includes(searchTerm)) ||
+      (t.subtasks && t.subtasks.some(st => st.title.toLowerCase().includes(searchTerm)))
     );
   }
 
@@ -452,6 +698,17 @@ function renderTasks() {
     const folderName = folder ? folder.name : 'General';
     const folderColor = folder ? folder.color : '#6366f1';
 
+    // Badge de Estado
+    let statusBadge = '';
+    if (task.status === 'completado') {
+      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1"><i class="fa-solid fa-check text-[9px]"></i>Completada</span>`;
+    } else if (task.status === 'en_curso') {
+      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200/60 flex items-center gap-1"><i class="fa-solid fa-spinner fa-spin-pulse text-[9px]"></i>En Curso</span>`;
+    } else {
+      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center gap-1"><i class="fa-solid fa-clock text-[9px]"></i>Pendiente</span>`;
+    }
+
+    // Badge de Prioridad
     let priorityBadge = '';
     if (task.priority === 'alta') {
       priorityBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100"><i class="fa-solid fa-fire text-[9px] mr-1"></i>Alta</span>`;
@@ -461,26 +718,65 @@ function renderTasks() {
       priorityBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">Baja</span>`;
     }
 
+    // Badge de Fecha de Vencimiento
+    let dueDatePill = '';
+    if (task.dueDate) {
+      const due = new Date(task.dueDate + 'T00:00:00');
+      const isPast = due < new Date().setHours(0,0,0,0);
+      dueDatePill = `
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${isPast && task.status !== 'completado' ? 'bg-rose-100 text-rose-800 font-semibold' : 'bg-slate-100 text-slate-600'}">
+          <i class="fa-regular fa-calendar text-[9px]"></i>
+          <span>Vence: ${due.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+        </span>
+      `;
+    }
+
+    // Resumen de Mini Tareas
+    let subtasksBadge = '';
+    const subtasks = task.subtasks || [];
+    if (subtasks.length > 0) {
+      const compCount = subtasks.filter(s => s.done).length;
+      const pct = Math.round((compCount / subtasks.length) * 100);
+      subtasksBadge = `
+        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-medium border border-indigo-100">
+          <i class="fa-solid fa-list-check text-[9px]"></i>
+          <span>${compCount}/${subtasks.length} mini tareas</span>
+          <div class="w-10 bg-indigo-200 rounded-full h-1 overflow-hidden ml-1">
+            <div class="bg-indigo-600 h-1 rounded-full" style="width: ${pct}%;"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    const isDone = task.status === 'completado';
+
     return `
-      <div class="task-card bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 flex items-start gap-3 ${task.done ? 'task-completed bg-slate-50/70' : ''}">
-        
-        <!-- Checkbox de completar -->
+      <div 
+        class="task-card bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 flex items-start gap-3 ${isDone ? 'task-completed bg-slate-50/70' : ''}" 
+        onclick="openTaskDetailModal(${task.id})"
+      >
+        <!-- Checkbox Rápido de Completar -->
         <input 
           type="checkbox" 
-          ${task.done ? 'checked' : ''} 
-          onchange="toggleTask(${task.id}, this.checked)"
+          ${isDone ? 'checked' : ''} 
+          onclick="event.stopPropagation()"
+          onchange="toggleTaskQuick(${task.id}, this.checked)"
           class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-0 cursor-pointer shrink-0"
         >
 
-        <!-- Contenido de la Tarea / Nota -->
-        <div class="flex-1 min-w-0 space-y-1">
+        <!-- Contenido Central de la Tarea -->
+        <div class="flex-1 min-w-0 space-y-1.5">
+          
+          <!-- Badges de Carpeta, Estado, Prioridad y Fecha -->
           <div class="flex flex-wrap items-center gap-1.5">
-            <!-- Badge de Carpeta con su color -->
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold text-white shadow-2xs" style="background-color: ${folderColor};">
               <i class="fa-solid ${folder ? folder.icon : 'fa-folder'} text-[9px]"></i>
               <span>${escapeHtml(folderName)}</span>
             </span>
+            ${statusBadge}
             ${priorityBadge}
+            ${dueDatePill}
+            ${subtasksBadge}
           </div>
 
           <!-- Título -->
@@ -488,21 +784,24 @@ function renderTasks() {
             ${escapeHtml(task.title)}
           </h4>
 
-          <!-- Descripción / Detalle de Nota (si tiene) -->
+          <!-- Descripción / Detalle de Nota -->
           ${task.description ? `
-            <p class="text-xs text-slate-500 break-words leading-relaxed pt-0.5 bg-slate-50/80 p-2 rounded-xl border border-slate-100 font-sans">
+            <p class="text-xs text-slate-500 break-words line-clamp-2 leading-relaxed bg-slate-50/80 p-2 rounded-xl border border-slate-100 font-sans">
               ${escapeHtml(task.description)}
             </p>
           ` : ''}
 
-          <div class="text-[10px] text-slate-400 pt-1 flex items-center gap-2">
+          <div class="text-[10px] text-slate-400 pt-0.5 flex items-center justify-between">
             <span><i class="fa-regular fa-clock mr-1 text-[9px]"></i>${new Date(task.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+            <span class="text-indigo-600 font-medium hover:underline flex items-center gap-1">
+              <span>Editar & pasos</span> <i class="fa-solid fa-chevron-right text-[8px]"></i>
+            </span>
           </div>
         </div>
 
-        <!-- Botón Eliminar -->
+        <!-- Botón Eliminar Rápido -->
         <button 
-          onclick="deleteTask(${task.id})" 
+          onclick="event.stopPropagation(); deleteTask(${task.id})" 
           class="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg transition shrink-0 active:scale-90"
           title="Eliminar tarea"
         >
@@ -526,7 +825,7 @@ function escapeHtml(str) {
 }
 
 // ==========================================================
-// CREAR TAREA
+// CREAR TAREA RÁPIDA
 // ==========================================================
 createTaskForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -534,20 +833,23 @@ createTaskForm.addEventListener('submit', async (e) => {
   if (!title) return;
 
   const folderId = taskFolderSelect.value;
+  const status = taskStatusSelect.value;
   const priority = taskPrioritySelect.value;
+  const dueDate = taskDueDateInput.value || null;
   const description = taskDescInput.value.trim();
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description, folderId, priority })
+      body: JSON.stringify({ title, description, folderId, status, priority, dueDate, subtasks: [] })
     });
 
     if (!res.ok) throw new Error('Error al crear tarea');
 
     taskTitleInput.value = '';
     taskDescInput.value = '';
+    taskDueDateInput.value = '';
     if (descExpanded) {
       descExpanded = false;
       descriptionFieldContainer.classList.add('hidden');
@@ -555,17 +857,21 @@ createTaskForm.addEventListener('submit', async (e) => {
     }
 
     await fetchTasks();
-    await fetchFolders(); // Actualiza conteo en carpetas
+    await fetchFolders();
     fetchTelemetry();
   } catch (err) {
-    alert('No se pudo guardar la tarea. Revisa la conexión con el servidor.');
+    alert('No se pudo guardar la tarea.');
   }
 });
 
-// Toggle Completada
-window.toggleTask = async function(id, done) {
+// Toggle Rápido de Completado
+window.toggleTaskQuick = async function(id, isChecked) {
+  const newStatus = isChecked ? 'completado' : 'pendiente';
   const task = allTasks.find(t => t.id === id);
-  if (task) task.done = done;
+  if (task) {
+    task.status = newStatus;
+    task.done = isChecked;
+  }
   renderTasks();
   updateBadges();
 
@@ -573,11 +879,10 @@ window.toggleTask = async function(id, done) {
     await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ done })
+      body: JSON.stringify({ status: newStatus, done: isChecked })
     });
     fetchFolders();
   } catch (err) {
-    console.error('Error al actualizar:', err);
     fetchTasks();
   }
 };
@@ -592,7 +897,6 @@ window.deleteTask = async function(id) {
     await fetch(`${API_BASE_URL}/api/tasks/${id}`, { method: 'DELETE' });
     fetchFolders();
   } catch (err) {
-    console.error('Error al eliminar tarea:', err);
     fetchTasks();
   }
 };
