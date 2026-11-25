@@ -43,8 +43,19 @@ resource "aws_iam_role" "ecs_task" {
   })
 }
 
-# Resolucion dinamica de roles (Soporta cuenta personal o AWS Academy)
+# Consulta automatica del LabRole preexistente de AWS Academy (si esta habilitado)
+data "aws_iam_role" "lab_role" {
+  count = var.use_aws_academy_lab_role ? 1 : 0
+  name  = "LabRole"
+}
+
+# Resolucion dinamica de roles (Soporta cuenta personal o AWS Academy con deteccion automatica)
 locals {
-  ecs_execution_role_arn = var.use_aws_academy_lab_role ? var.aws_academy_lab_role_arn : aws_iam_role.ecs_execution[0].arn
-  ecs_task_role_arn      = var.use_aws_academy_lab_role ? var.aws_academy_lab_role_arn : aws_iam_role.ecs_task[0].arn
+  ecs_execution_role_arn = var.use_aws_academy_lab_role ? (
+    var.aws_academy_lab_role_arn != "" ? var.aws_academy_lab_role_arn : data.aws_iam_role.lab_role[0].arn
+  ) : aws_iam_role.ecs_execution[0].arn
+
+  ecs_task_role_arn = var.use_aws_academy_lab_role ? (
+    var.aws_academy_lab_role_arn != "" ? var.aws_academy_lab_role_arn : data.aws_iam_role.lab_role[0].arn
+  ) : aws_iam_role.ecs_task[0].arn
 }
