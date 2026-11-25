@@ -604,19 +604,19 @@ function renderFoldersList() {
   foldersList.innerHTML = allFolders.map(folder => {
     const isActive = activeFolderId === folder.id;
     return `
-      <div class="folder-item group flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer ${isActive ? 'active' : 'text-slate-600 hover:bg-slate-100'}" onclick="selectFolder('${folder.id}')">
-        <div class="flex items-center gap-2.5 min-w-0">
+      <div class="folder-item group flex items-center justify-between px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer gap-2 ${isActive ? 'active' : 'text-slate-600 hover:bg-slate-100'}" onclick="selectFolder('${folder.id}')">
+        <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
           <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${folder.color};"></span>
-          <i class="fa-solid ${folder.icon || 'fa-folder'} text-slate-400 w-3.5 text-center text-xs"></i>
+          <i class="fa-solid ${folder.icon || 'fa-folder'} text-slate-400 w-3.5 text-center text-xs shrink-0"></i>
           <span class="truncate">${escapeHtml(folder.name)}</span>
         </div>
-        <div class="flex items-center gap-1.5 shrink-0">
-          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold text-slate-400 group-hover:text-slate-600">
+        <div class="flex items-center gap-1 shrink-0">
+          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold text-slate-400 group-hover:text-slate-600 shrink-0">
             ${folder.pendingCount > 0 ? folder.pendingCount : ''}
           </span>
           <button 
             onclick="event.stopPropagation(); deleteFolder('${folder.id}', '${escapeHtml(folder.name)}')" 
-            class="text-slate-300 hover:text-rose-500 p-1 rounded transition opacity-0 group-hover:opacity-100"
+            class="text-slate-300 hover:text-rose-500 p-1 rounded transition opacity-0 group-hover:opacity-100 shrink-0"
             title="Eliminar carpeta"
           >
             <i class="fa-solid fa-trash-can text-[11px]"></i>

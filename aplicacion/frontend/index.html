@@ -13,87 +13,87 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen flex antialiased font-sans overflow-x-hidden">
 
   <!-- ========================================================== -->
-  <!-- BARRA LATERAL (SIDEBAR)                                    -->
+  <!-- BARRA LATERAL (SIDEBAR) 100% RESPONSIVE                    -->
   <!-- ========================================================== -->
   <aside 
     id="sidebar" 
-    class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out flex flex-col shadow-lg md:shadow-none"
+    class="fixed inset-y-0 left-0 z-40 w-[85vw] max-w-[280px] md:w-72 md:max-w-none bg-white border-r border-slate-200 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out flex flex-col shadow-xl md:shadow-none overflow-x-hidden"
   >
     <!-- Logo & Nombre de la App -->
-    <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-sm shadow-indigo-200">
-          <i class="fa-solid fa-layer-group text-sm"></i>
+    <div class="p-3 sm:p-4 border-b border-slate-100 flex items-center justify-between gap-2 min-w-0">
+      <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-xs">
+          <i class="fa-solid fa-layer-group text-xs sm:text-sm"></i>
         </div>
-        <div>
-          <h1 class="text-base font-bold text-slate-800 tracking-tight leading-none">TaskFlow Pro</h1>
-          <p class="text-[11px] text-slate-400 font-medium mt-0.5">Notas, Mini Tareas & AWS</p>
+        <div class="min-w-0">
+          <h1 class="text-sm sm:text-base font-bold text-slate-800 tracking-tight leading-none truncate">TaskFlow Pro</h1>
+          <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-0.5 truncate">Notas, Mini Tareas & AWS</p>
         </div>
       </div>
-      <!-- Botón cerrar sidebar en móvil -->
-      <button id="btn-close-sidebar" class="md:hidden text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
-        <i class="fa-solid fa-xmark text-lg"></i>
+      <!-- Botón cerrar sidebar en móvil (siempre visible en el drawer) -->
+      <button id="btn-close-sidebar" class="md:hidden text-slate-400 hover:text-slate-600 p-1.5 rounded-lg shrink-0">
+        <i class="fa-solid fa-xmark text-base"></i>
       </button>
     </div>
 
     <!-- Navegación y Vistas Rápidas -->
-    <div class="flex-1 overflow-y-auto p-3 space-y-6">
+    <div class="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-5">
       
       <!-- Sección: Vistas Rápidas -->
       <div class="space-y-1">
-        <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Vistas Rápidas</span>
+        <span class="px-2.5 sm:px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Vistas Rápidas</span>
         
-        <button class="nav-view-btn active w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition" data-view="all">
-          <span class="flex items-center gap-2.5">
-            <i class="fa-solid fa-inbox text-indigo-600 w-4 text-center"></i>
-            <span>Todas las tareas</span>
+        <button class="nav-view-btn active w-full flex items-center justify-between px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold transition gap-2" data-view="all">
+          <span class="flex items-center gap-2 min-w-0">
+            <i class="fa-solid fa-inbox text-indigo-600 w-4 text-center shrink-0"></i>
+            <span class="truncate">Todas las tareas</span>
           </span>
-          <span id="badge-all-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">0</span>
+          <span id="badge-all-count" class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 shrink-0">0</span>
         </button>
 
-        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="status-pendiente">
-          <span class="flex items-center gap-2.5">
-            <i class="fa-solid fa-clock text-amber-500 w-4 text-center"></i>
-            <span>Pendientes</span>
+        <button class="nav-view-btn w-full flex items-center justify-between px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition gap-2" data-view="status-pendiente">
+          <span class="flex items-center gap-2 min-w-0">
+            <i class="fa-solid fa-clock text-amber-500 w-4 text-center shrink-0"></i>
+            <span class="truncate">Pendientes</span>
           </span>
-          <span id="badge-pending-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">0</span>
+          <span id="badge-pending-count" class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 shrink-0">0</span>
         </button>
 
-        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="status-en_curso">
-          <span class="flex items-center gap-2.5">
-            <i class="fa-solid fa-spinner fa-spin-pulse text-sky-500 w-4 text-center"></i>
-            <span>En Curso</span>
+        <button class="nav-view-btn w-full flex items-center justify-between px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition gap-2" data-view="status-en_curso">
+          <span class="flex items-center gap-2 min-w-0">
+            <i class="fa-solid fa-spinner fa-spin-pulse text-sky-500 w-4 text-center shrink-0"></i>
+            <span class="truncate">En Curso</span>
           </span>
-          <span id="badge-in-progress-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-600">0</span>
+          <span id="badge-in-progress-count" class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-600 shrink-0">0</span>
         </button>
 
-        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="status-completado">
-          <span class="flex items-center gap-2.5">
-            <i class="fa-solid fa-circle-check text-emerald-500 w-4 text-center"></i>
-            <span>Completadas</span>
+        <button class="nav-view-btn w-full flex items-center justify-between px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition gap-2" data-view="status-completado">
+          <span class="flex items-center gap-2 min-w-0">
+            <i class="fa-solid fa-circle-check text-emerald-500 w-4 text-center shrink-0"></i>
+            <span class="truncate">Completadas</span>
           </span>
-          <span id="badge-completed-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">0</span>
+          <span id="badge-completed-count" class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 shrink-0">0</span>
         </button>
 
-        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="priority-high">
-          <span class="flex items-center gap-2.5">
-            <i class="fa-solid fa-fire text-rose-500 w-4 text-center"></i>
-            <span>Prioridad Alta</span>
+        <button class="nav-view-btn w-full flex items-center justify-between px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition gap-2" data-view="priority-high">
+          <span class="flex items-center gap-2 min-w-0">
+            <i class="fa-solid fa-fire text-rose-500 w-4 text-center shrink-0"></i>
+            <span class="truncate">Prioridad Alta</span>
           </span>
-          <span id="badge-high-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600">0</span>
+          <span id="badge-high-count" class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 shrink-0">0</span>
         </button>
       </div>
 
       <!-- Sección: Carpetas / Categorías personalizables -->
       <div class="space-y-1.5">
-        <div class="px-3 flex items-center justify-between">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Mis Carpetas</span>
+        <div class="px-2.5 sm:px-3 flex items-center justify-between gap-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">Mis Carpetas</span>
           <button 
             id="btn-open-new-folder" 
-            class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover:bg-indigo-50 px-2 py-0.5 rounded-md transition"
+            class="text-[11px] sm:text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover:bg-indigo-50 px-2 py-0.5 rounded-md transition shrink-0"
             title="Crear nueva carpeta"
           >
-            <i class="fa-solid fa-plus text-[10px]"></i>
+            <i class="fa-solid fa-plus text-[9px]"></i>
             <span>Nueva</span>
           </button>
         </div>
@@ -107,21 +107,21 @@
     </div>
 
     <!-- Footer del Sidebar con Botón DevOps y Estado -->
-    <div class="p-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
+    <div class="p-2.5 sm:p-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
       <button 
         id="btn-open-devops" 
-        class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition shadow-xs group"
+        class="w-full flex items-center justify-between px-2.5 sm:px-3 py-2 text-xs font-medium bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition shadow-xs group gap-2"
       >
-        <div class="flex items-center gap-2">
-          <span id="sidebar-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <span class="font-semibold text-slate-700">DevOps & AWS ECS</span>
+        <div class="flex items-center gap-2 min-w-0">
+          <span id="sidebar-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+          <span class="font-semibold text-slate-700 truncate">DevOps & AWS ECS</span>
         </div>
-        <i class="fa-solid fa-gear text-slate-400 group-hover:text-indigo-600 transition"></i>
+        <i class="fa-solid fa-gear text-slate-400 group-hover:text-indigo-600 transition shrink-0"></i>
       </button>
 
       <div class="flex justify-between items-center px-1 text-[10px] text-slate-400">
-        <span>UTP &bull; Tópicos Especiales 1</span>
-        <span class="font-mono">v2.2</span>
+        <span class="truncate">UTP &bull; Tópicos 1</span>
+        <span class="font-mono shrink-0">v2.2</span>
       </div>
     </div>
   </aside>
