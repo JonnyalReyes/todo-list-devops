@@ -3,7 +3,7 @@
 # Renombrar a terraform.tfvars para ejecucion local
 # ==========================================================
 
-aws_region   = "us-east-1"
+aws_region   = "us-east-2"
 project_name = "todo-list-devops"
 environment  = "production"
 

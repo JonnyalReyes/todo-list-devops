@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "Región de AWS donde se desplegarán los recursos"
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
 }
 
 variable "project_name" {
@@ -82,7 +82,7 @@ variable "backend_desired_count" {
 variable "use_aws_academy_lab_role" {
   description = "Activar en true si se ejecuta en AWS Academy Learner Lab (donde no está permitido crear nuevos roles IAM)"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "aws_academy_lab_role_arn" {

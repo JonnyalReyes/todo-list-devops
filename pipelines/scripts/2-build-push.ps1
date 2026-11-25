@@ -1,6 +1,6 @@
 # Script PowerShell para ejecutar localmente el Pipeline 2 (CI: Build & Push a ECR)
 param(
-    [string]$AwsRegion = "us-east-1",
+    [string]$AwsRegion = "us-east-2",
     [string]$ProjectName = "todo-list-devops"
 )
 
