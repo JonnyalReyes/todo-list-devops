@@ -4,14 +4,14 @@ const os = require('os');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const VERSION = process.env.APP_VERSION || '1.0.0';
+const VERSION = process.env.APP_VERSION || '1.1.0';
 const ENVIRONMENT = process.env.NODE_ENV || 'production';
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Request logger for CloudWatch
+// Request logger for Amazon CloudWatch
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -21,19 +21,47 @@ app.use((req, res, next) => {
   next();
 });
 
-// In-memory Task store (preloaded with sample items for demo)
+// In-memory Task store (con tareas reales de ejemplo)
 let tasks = [
-  { id: 1, title: 'Aprovisionar VPC y ECS con Terraform', done: true, createdAt: new Date(Date.now() - 3600000).toISOString() },
-  { id: 2, title: 'Construir y subir imágenes a Amazon ECR', done: true, createdAt: new Date(Date.now() - 1800000).toISOString() },
-  { id: 3, title: 'Desplegar servicios en Amazon ECS Fargate', done: false, createdAt: new Date().toISOString() },
-  { id: 4, title: 'Demostración en vivo al profesor', done: false, createdAt: new Date().toISOString() }
+  {
+    id: 1,
+    title: 'Preparar diapositivas y arquitectura para la demo',
+    category: 'Estudio',
+    priority: 'alta',
+    done: false,
+    createdAt: new Date(Date.now() - 7200000).toISOString()
+  },
+  {
+    id: 2,
+    title: 'Verificar pipeline de Terraform en AWS',
+    category: 'Trabajo',
+    priority: 'alta',
+    done: true,
+    createdAt: new Date(Date.now() - 3600000).toISOString()
+  },
+  {
+    id: 3,
+    title: 'Probar imágenes Docker de frontend y backend',
+    category: 'Trabajo',
+    priority: 'media',
+    done: true,
+    createdAt: new Date(Date.now() - 1800000).toISOString()
+  },
+  {
+    id: 4,
+    title: 'Revisar logs en CloudWatch y métricas de Fargate',
+    category: 'Estudio',
+    priority: 'baja',
+    done: false,
+    createdAt: new Date().toISOString()
+  }
 ];
 
-// Health Check Endpoint (used by AWS ALB / ECS Target Group)
+// Health Check Endpoint (usado por el ALB Target Group)
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
-    service: 'backend-api',
+    service: 'todo-backend-api',
     version: VERSION,
     uptimeSeconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
@@ -41,49 +69,63 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Info Endpoint (demonstrates container metadata in demo)
+// Telemetría & Metadata del contenedor (para el modal de configuración DevOps)
 app.get('/api/info', (req, res) => {
   res.json({
-    service: 'DevOps Demo Backend API',
+    service: 'To-Do List API Service',
     version: VERSION,
     environment: ENVIRONMENT,
     hostname: os.hostname(),
     platform: `${os.type()} ${os.arch()}`,
     uptimeSeconds: Math.floor(process.uptime()),
     memoryUsageMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
-    awsRegion: process.env.AWS_REGION || 'us-east-1 (default)'
+    awsRegion: process.env.AWS_REGION || 'us-east-1'
   });
 });
 
-// Get all tasks
+// Obtener todas las tareas (con soporte de filtro opcional por categoría o estado)
 app.get('/api/tasks', (req, res) => {
+  const { category, done } = req.query;
+  let filtered = [...tasks];
+
+  if (category) {
+    filtered = filtered.filter(t => t.category.toLowerCase() === category.toLowerCase());
+  }
+  if (done !== undefined) {
+    const isDone = done === 'true';
+    filtered = filtered.filter(t => t.done === isDone);
+  }
+
   res.json({
     success: true,
-    count: tasks.length,
-    data: tasks
+    count: filtered.length,
+    total: tasks.length,
+    data: filtered
   });
 });
 
-// Create task
+// Crear nueva tarea
 app.post('/api/tasks', (req, res) => {
-  const { title } = req.body;
+  const { title, category, priority } = req.body;
   if (!title || typeof title !== 'string' || !title.trim()) {
-    return res.status(400).json({ success: false, error: 'El campo "title" es obligatorio.' });
+    return res.status(400).json({ success: false, error: 'El título de la tarea es obligatorio.' });
   }
 
   const newTask = {
     id: tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
     title: title.trim(),
+    category: category && ['Trabajo', 'Estudio', 'Personal'].includes(category) ? category : 'General',
+    priority: priority && ['alta', 'media', 'baja'].includes(priority) ? priority : 'media',
     done: false,
     createdAt: new Date().toISOString()
   };
 
-  tasks.push(newTask);
-  console.log(`[TASK CREATED] ID: ${newTask.id} - "${newTask.title}"`);
+  tasks.unshift(newTask);
+  console.log(`[NUEVA TAREA] ID: ${newTask.id} - "${newTask.title}" [${newTask.category} | ${newTask.priority}]`);
   res.status(201).json({ success: true, data: newTask });
 });
 
-// Toggle task status
+// Actualizar estado o datos de una tarea
 app.put('/api/tasks/:id', (req, res) => {
   const id = parseInt(req.params.id, 10);
   const task = tasks.find(t => t.id === id);
@@ -95,14 +137,20 @@ app.put('/api/tasks/:id', (req, res) => {
   if (req.body.done !== undefined) {
     task.done = Boolean(req.body.done);
   }
-  if (req.body.title && typeof req.body.title === 'string') {
+  if (req.body.title && typeof req.body.title === 'string' && req.body.title.trim()) {
     task.title = req.body.title.trim();
+  }
+  if (req.body.priority && ['alta', 'media', 'baja'].includes(req.body.priority)) {
+    task.priority = req.body.priority;
+  }
+  if (req.body.category) {
+    task.category = req.body.category;
   }
 
   res.json({ success: true, data: task });
 });
 
-// Delete task
+// Eliminar tarea
 app.delete('/api/tasks/:id', (req, res) => {
   const id = parseInt(req.params.id, 10);
   const index = tasks.findIndex(t => t.id === id);
@@ -112,25 +160,27 @@ app.delete('/api/tasks/:id', (req, res) => {
   }
 
   const deleted = tasks.splice(index, 1)[0];
-  console.log(`[TASK DELETED] ID: ${deleted.id}`);
+  console.log(`[TAREA ELIMINADA] ID: ${deleted.id}`);
   res.json({ success: true, data: deleted });
 });
 
-// Root route
+// Raíz de la API
 app.get('/', (req, res) => {
   res.json({
-    message: 'Backend API DevOps AWS ECS está en línea.',
-    healthEndpoint: '/health',
-    infoEndpoint: '/api/info',
-    tasksEndpoint: '/api/tasks'
+    name: 'To-Do List API REST',
+    version: VERSION,
+    endpoints: {
+      health: '/health',
+      info: '/api/info',
+      tasks: '/api/tasks'
+    }
   });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`=========================================`);
-  console.log(` Backend API iniciada exitosamente`);
+  console.log(` To-Do List Backend API en ejecución`);
   console.log(` Puerto: ${PORT}`);
-  console.log(` Versión: ${VERSION}`);
-  console.log(` Hostname / Container ID: ${os.hostname()}`);
+  console.log(` Host: ${os.hostname()}`);
   console.log(`=========================================`);
 });
