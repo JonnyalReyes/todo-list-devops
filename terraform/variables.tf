@@ -82,7 +82,7 @@ variable "backend_desired_count" {
 variable "use_aws_academy_lab_role" {
   description = "Activar en true si se ejecuta en AWS Academy Learner Lab (donde no está permitido crear nuevos roles IAM)"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "aws_academy_lab_role_arn" {
