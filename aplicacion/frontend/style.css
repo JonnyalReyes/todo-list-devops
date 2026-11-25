@@ -2,16 +2,16 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: scale(0.97);
+    transform: translateY(-4px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.15s ease-out forwards;
+  animation: fadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Items de navegación del sidebar */
@@ -54,6 +54,19 @@ input[type="checkbox"] {
   accent-color: #4f46e5;
   min-width: 1.05rem;
   min-height: 1.05rem;
+}
+
+/* Dropdowns modernos */
+.dropdown-menu {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
+}
+
+.dropdown-item {
+  transition: all 0.12s ease;
+}
+
+.dropdown-item:active {
+  transform: scale(0.98);
 }
 
 /* Color choices en modal */

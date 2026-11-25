@@ -93,6 +93,87 @@ const apiUrlInput = document.getElementById('api-url-input');
 const btnSaveApi = document.getElementById('btn-save-api');
 
 // ==========================================================
+// SISTEMA DE DROPDOWNS MODERNOS
+// ==========================================================
+function setupDropdown(containerId, onSelectCallback) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const trigger = container.querySelector('.dropdown-trigger');
+  const menu = container.querySelector('.dropdown-menu');
+  const hiddenInput = container.querySelector('input[type="hidden"]');
+  const label = container.querySelector('.trigger-label');
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // Cerrar otros dropdowns abiertos
+    document.querySelectorAll('.dropdown-menu').forEach(m => {
+      if (m !== menu) m.classList.add('hidden');
+    });
+    menu.classList.toggle('hidden');
+  });
+
+  menu.addEventListener('click', (e) => {
+    const item = e.target.closest('.dropdown-item');
+    if (!item) return;
+    e.stopPropagation();
+
+    const value = item.dataset.value;
+    const itemText = item.querySelector('span:last-child') ? item.querySelector('span:last-child').textContent : item.textContent.trim();
+
+    if (hiddenInput) hiddenInput.value = value;
+    if (label) label.textContent = itemText;
+
+    // Actualizar indicador de color/estado si aplica
+    const itemDot = item.querySelector('.status-dot, .folder-dot, .priority-dot, span[style*="background-color"]');
+    const triggerDot = container.querySelector('.status-dot, .folder-dot, .priority-dot');
+    if (itemDot && triggerDot) {
+      if (itemDot.style.backgroundColor) {
+        triggerDot.style.backgroundColor = itemDot.style.backgroundColor;
+      } else {
+        triggerDot.className = itemDot.className;
+      }
+    }
+
+    menu.classList.add('hidden');
+    if (typeof onSelectCallback === 'function') {
+      onSelectCallback(value, itemText);
+    }
+  });
+}
+
+// Cerrar todos los dropdowns al hacer clic fuera
+document.addEventListener('click', () => {
+  document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+});
+
+// Inicializar dropdowns fijos (Estado y Prioridad)
+setupDropdown('dropdown-task-status', (val) => {
+  const dot = document.querySelector('#dropdown-task-status .status-dot');
+  if (val === 'pendiente') dot.className = 'w-2 h-2 rounded-full bg-amber-400 status-dot';
+  if (val === 'en_curso') dot.className = 'w-2 h-2 rounded-full bg-sky-500 status-dot';
+  if (val === 'completado') dot.className = 'w-2 h-2 rounded-full bg-emerald-500 status-dot';
+});
+
+setupDropdown('dropdown-task-priority', (val) => {
+  const icon = document.querySelector('#dropdown-task-priority .priority-icon');
+  if (val === 'alta') icon.className = 'fa-solid fa-fire text-rose-500 text-xs priority-icon';
+  if (val === 'media') icon.className = 'fa-solid fa-flag text-amber-500 text-xs priority-icon';
+  if (val === 'baja') icon.className = 'fa-solid fa-flag text-slate-400 text-xs priority-icon';
+});
+
+setupDropdown('dropdown-detail-status', (val) => {
+  updateDetailBadges();
+});
+
+setupDropdown('dropdown-detail-priority', (val) => {
+  updateDetailBadges();
+});
+
+setupDropdown('dropdown-task-folder');
+setupDropdown('dropdown-detail-folder');
+
+// ==========================================================
 // CONTROL DEL SIDEBAR EN MÓVIL
 // ==========================================================
 function openSidebar() {
@@ -135,26 +216,58 @@ function openTaskDetailModal(taskId) {
   const task = allTasks.find(t => t.id === taskId);
   if (!task) return;
 
-  // Clonar para edición en memoria
   activeEditingTask = JSON.parse(JSON.stringify(task));
   if (!Array.isArray(activeEditingTask.subtasks)) {
     activeEditingTask.subtasks = [];
   }
 
-  // Cargar datos en los inputs del modal
+  // Cargar datos
   detailTitleInput.value = activeEditingTask.title || '';
   detailDescInput.value = activeEditingTask.description || '';
-  detailStatusSelect.value = activeEditingTask.status || 'pendiente';
-  detailPrioritySelect.value = activeEditingTask.priority || 'media';
   detailDueDateInput.value = activeEditingTask.dueDate || '';
   newSubtaskInput.value = '';
 
-  // Actualizar opciones del selector de carpetas
-  detailFolderSelect.innerHTML = allFolders.map(f => `
-    <option value="${f.id}" ${activeEditingTask.folderId === f.id ? 'selected' : ''}>
-      ${escapeHtml(f.name)}
-    </option>
-  `).join('');
+  // Actualizar Dropdown de Estado en Modal
+  const statusVal = activeEditingTask.status || 'pendiente';
+  detailStatusSelect.value = statusVal;
+  const statusTriggerLabel = document.querySelector('#dropdown-detail-status .trigger-label');
+  const statusDot = document.querySelector('#dropdown-detail-status .status-dot');
+  if (statusVal === 'completado') {
+    statusTriggerLabel.textContent = '✅ Completado';
+    statusDot.className = 'w-2 h-2 rounded-full bg-emerald-500 status-dot';
+  } else if (statusVal === 'en_curso') {
+    statusTriggerLabel.textContent = '🚀 En Curso';
+    statusDot.className = 'w-2 h-2 rounded-full bg-sky-500 status-dot';
+  } else {
+    statusTriggerLabel.textContent = '⏳ Pendiente';
+    statusDot.className = 'w-2 h-2 rounded-full bg-amber-400 status-dot';
+  }
+
+  // Actualizar Dropdown de Prioridad en Modal
+  const priorityVal = activeEditingTask.priority || 'media';
+  detailPrioritySelect.value = priorityVal;
+  const priorityTriggerLabel = document.querySelector('#dropdown-detail-priority .trigger-label');
+  const priorityDot = document.querySelector('#dropdown-detail-priority .priority-dot');
+  if (priorityVal === 'alta') {
+    priorityTriggerLabel.textContent = 'Prioridad Alta 🔥';
+    priorityDot.className = 'w-2 h-2 rounded-full bg-rose-500 priority-dot';
+  } else if (priorityVal === 'media') {
+    priorityTriggerLabel.textContent = 'Prioridad Media';
+    priorityDot.className = 'w-2 h-2 rounded-full bg-amber-400 priority-dot';
+  } else {
+    priorityTriggerLabel.textContent = 'Prioridad Baja';
+    priorityDot.className = 'w-2 h-2 rounded-full bg-slate-400 priority-dot';
+  }
+
+  // Actualizar Dropdown de Carpeta en Modal
+  const folder = allFolders.find(f => f.id === activeEditingTask.folderId);
+  detailFolderSelect.value = activeEditingTask.folderId || (allFolders[0] ? allFolders[0].id : '');
+  const folderTriggerLabel = document.querySelector('#dropdown-detail-folder .trigger-label');
+  const folderDot = document.querySelector('#dropdown-detail-folder .folder-dot');
+  if (folder) {
+    folderTriggerLabel.textContent = folder.name;
+    folderDot.style.backgroundColor = folder.color;
+  }
 
   updateDetailBadges();
   renderModalSubtasks();
@@ -173,7 +286,6 @@ modalTaskDetail.addEventListener('click', (e) => {
   if (e.target === modalTaskDetail) closeTaskDetailModal();
 });
 
-// Actualizar badges visuales en el modal según selección
 function updateDetailBadges() {
   const status = detailStatusSelect.value;
   const priority = detailPrioritySelect.value;
@@ -200,9 +312,6 @@ function updateDetailBadges() {
     detailPriorityPill.textContent = 'Prioridad Baja';
   }
 }
-
-detailStatusSelect.addEventListener('change', updateDetailBadges);
-detailPrioritySelect.addEventListener('change', updateDetailBadges);
 
 // Renderizar mini tareas dentro del modal
 function renderModalSubtasks() {
@@ -250,7 +359,6 @@ function renderModalSubtasks() {
   `).join('');
 }
 
-// Toggle subtask inside modal
 window.toggleModalSubtask = function(index, done) {
   if (activeEditingTask && activeEditingTask.subtasks[index]) {
     activeEditingTask.subtasks[index].done = done;
@@ -258,7 +366,6 @@ window.toggleModalSubtask = function(index, done) {
   }
 };
 
-// Delete subtask inside modal
 window.deleteModalSubtask = function(index) {
   if (activeEditingTask && activeEditingTask.subtasks) {
     activeEditingTask.subtasks.splice(index, 1);
@@ -266,7 +373,6 @@ window.deleteModalSubtask = function(index) {
   }
 };
 
-// Add subtask inside modal
 function handleAddSubtask() {
   const text = newSubtaskInput.value.trim();
   if (!text || !activeEditingTask) return;
@@ -294,7 +400,6 @@ newSubtaskInput.addEventListener('keydown', (e) => {
   }
 });
 
-// Guardar cambios del modal en el Backend
 btnSaveTaskDetail.addEventListener('click', async () => {
   if (!activeEditingTask) return;
   const newTitle = detailTitleInput.value.trim();
@@ -329,14 +434,13 @@ btnSaveTaskDetail.addEventListener('click', async () => {
     await fetchTasks();
     await fetchFolders();
   } catch (err) {
-    alert('No se pudieron guardar los cambios. Revisa la conexión.');
+    alert('No se pudieron guardar los cambios.');
   } finally {
     btnSaveTaskDetail.disabled = false;
     btnSaveTaskDetail.textContent = 'Guardar Cambios';
   }
 });
 
-// Eliminar tarea desde el modal
 btnDeleteTaskModal.addEventListener('click', async () => {
   if (!activeEditingTask) return;
   if (!confirm(`¿Eliminar la tarea "${activeEditingTask.title}"?`)) return;
@@ -485,7 +589,7 @@ async function fetchFolders() {
     const result = await res.json();
     allFolders = result.data || [];
     renderFoldersList();
-    renderFolderSelectOptions();
+    renderFolderDropdowns();
   } catch (err) {
     console.error('Error cargando carpetas:', err);
   }
@@ -523,12 +627,29 @@ function renderFoldersList() {
   }).join('');
 }
 
-function renderFolderSelectOptions() {
-  taskFolderSelect.innerHTML = allFolders.map(f => `
-    <option value="${f.id}" ${activeFolderId === f.id ? 'selected' : ''}>
-      ${escapeHtml(f.name)}
-    </option>
+// Llenar los menús dropdowns modernos de carpeta
+function renderFolderDropdowns() {
+  const taskFolderContainer = document.querySelector('#dropdown-task-folder .dropdown-items-container');
+  const detailFolderContainer = document.querySelector('#dropdown-detail-folder .dropdown-items-container');
+
+  if (allFolders.length === 0) return;
+
+  const html = allFolders.map(f => `
+    <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700 transition" data-value="${f.id}">
+      <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${f.color};"></span>
+      <span class="truncate">${escapeHtml(f.name)}</span>
+    </div>
   `).join('');
+
+  if (taskFolderContainer) taskFolderContainer.innerHTML = html;
+  if (detailFolderContainer) detailFolderContainer.innerHTML = html;
+
+  // Si no hay carpeta seleccionada en el formulario rápido, seleccionar la primera
+  if (!taskFolderSelect.value && allFolders[0]) {
+    taskFolderSelect.value = allFolders[0].id;
+    const label = document.querySelector('#dropdown-task-folder .trigger-label');
+    if (label) label.textContent = allFolders[0].name;
+  }
 }
 
 window.selectFolder = function(folderId) {
@@ -546,6 +667,11 @@ window.selectFolder = function(folderId) {
     `;
     currentViewSubtitle.textContent = `Tareas clasificadas en la carpeta ${folder.name}`;
     filterDisplayLabel.textContent = `Carpeta: ${folder.name}`;
+
+    // Actualizar selector rápido a esta carpeta
+    taskFolderSelect.value = folder.id;
+    const taskFolderLabel = document.querySelector('#dropdown-task-folder .trigger-label');
+    if (taskFolderLabel) taskFolderLabel.textContent = folder.name;
   }
 
   closeSidebar();
@@ -657,7 +783,6 @@ function updateBadges() {
 function renderTasks() {
   let filtered = [...allTasks];
 
-  // Filtro por Vista o Carpeta
   if (currentView === 'status-pendiente') {
     filtered = filtered.filter(t => t.status === 'pendiente');
   } else if (currentView === 'status-en_curso') {
@@ -671,7 +796,6 @@ function renderTasks() {
     filtered = filtered.filter(t => t.folderId === fId);
   }
 
-  // Filtro por Búsqueda
   if (searchTerm) {
     filtered = filtered.filter(t => 
       t.title.toLowerCase().includes(searchTerm) || 
@@ -698,7 +822,6 @@ function renderTasks() {
     const folderName = folder ? folder.name : 'General';
     const folderColor = folder ? folder.color : '#6366f1';
 
-    // Badge de Estado
     let statusBadge = '';
     if (task.status === 'completado') {
       statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1"><i class="fa-solid fa-check text-[9px]"></i>Completada</span>`;
@@ -708,7 +831,6 @@ function renderTasks() {
       statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center gap-1"><i class="fa-solid fa-clock text-[9px]"></i>Pendiente</span>`;
     }
 
-    // Badge de Prioridad
     let priorityBadge = '';
     if (task.priority === 'alta') {
       priorityBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100"><i class="fa-solid fa-fire text-[9px] mr-1"></i>Alta</span>`;
@@ -718,7 +840,6 @@ function renderTasks() {
       priorityBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">Baja</span>`;
     }
 
-    // Badge de Fecha de Vencimiento
     let dueDatePill = '';
     if (task.dueDate) {
       const due = new Date(task.dueDate + 'T00:00:00');
@@ -731,7 +852,6 @@ function renderTasks() {
       `;
     }
 
-    // Resumen de Mini Tareas
     let subtasksBadge = '';
     const subtasks = task.subtasks || [];
     if (subtasks.length > 0) {
@@ -755,7 +875,6 @@ function renderTasks() {
         class="task-card bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 flex items-start gap-3 ${isDone ? 'task-completed bg-slate-50/70' : ''}" 
         onclick="openTaskDetailModal(${task.id})"
       >
-        <!-- Checkbox Rápido de Completar -->
         <input 
           type="checkbox" 
           ${isDone ? 'checked' : ''} 
@@ -764,10 +883,7 @@ function renderTasks() {
           class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-0 cursor-pointer shrink-0"
         >
 
-        <!-- Contenido Central de la Tarea -->
         <div class="flex-1 min-w-0 space-y-1.5">
-          
-          <!-- Badges de Carpeta, Estado, Prioridad y Fecha -->
           <div class="flex flex-wrap items-center gap-1.5">
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold text-white shadow-2xs" style="background-color: ${folderColor};">
               <i class="fa-solid ${folder ? folder.icon : 'fa-folder'} text-[9px]"></i>
@@ -779,12 +895,10 @@ function renderTasks() {
             ${subtasksBadge}
           </div>
 
-          <!-- Título -->
           <h4 class="task-title text-sm font-semibold text-slate-800 break-words leading-snug">
             ${escapeHtml(task.title)}
           </h4>
 
-          <!-- Descripción / Detalle de Nota -->
           ${task.description ? `
             <p class="text-xs text-slate-500 break-words line-clamp-2 leading-relaxed bg-slate-50/80 p-2 rounded-xl border border-slate-100 font-sans">
               ${escapeHtml(task.description)}
@@ -799,7 +913,6 @@ function renderTasks() {
           </div>
         </div>
 
-        <!-- Botón Eliminar Rápido -->
         <button 
           onclick="event.stopPropagation(); deleteTask(${task.id})" 
           class="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg transition shrink-0 active:scale-90"
@@ -832,9 +945,9 @@ createTaskForm.addEventListener('submit', async (e) => {
   const title = taskTitleInput.value.trim();
   if (!title) return;
 
-  const folderId = taskFolderSelect.value;
-  const status = taskStatusSelect.value;
-  const priority = taskPrioritySelect.value;
+  const folderId = taskFolderSelect.value || (allFolders[0] ? allFolders[0].id : 'general');
+  const status = taskStatusSelect.value || 'pendiente';
+  const priority = taskPrioritySelect.value || 'media';
   const dueDate = taskDueDateInput.value || null;
   const description = taskDescInput.value.trim();
 
@@ -864,7 +977,6 @@ createTaskForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Toggle Rápido de Completado
 window.toggleTaskQuick = async function(id, isChecked) {
   const newStatus = isChecked ? 'completado' : 'pendiente';
   const task = allTasks.find(t => t.id === id);
@@ -887,7 +999,6 @@ window.toggleTaskQuick = async function(id, isChecked) {
   }
 };
 
-// Eliminar Tarea
 window.deleteTask = async function(id) {
   allTasks = allTasks.filter(t => t.id !== id);
   renderTasks();

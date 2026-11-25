@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TaskFlow Pro &bull; Tareas, Notas & Mini Tareas</title>
+  <!-- Favicon de la aplicación -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
@@ -119,7 +121,7 @@
 
       <div class="flex justify-between items-center px-1 text-[10px] text-slate-400">
         <span>UTP &bull; Tópicos Especiales 1</span>
-        <span class="font-mono">v2.1</span>
+        <span class="font-mono">v2.2</span>
       </div>
     </div>
   </aside>
@@ -175,7 +177,7 @@
     <!-- Contenido de la Página -->
     <main class="flex-1 p-3 sm:p-6 max-w-4xl w-full mx-auto space-y-4">
 
-      <!-- Formulario para Crear Tarea / Nota -->
+      <!-- Formulario para Crear Tarea / Nota con DROPDOWNS MODERNOS -->
       <div class="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-5 shadow-xs space-y-3">
         <form id="create-task-form" class="space-y-3">
           
@@ -197,41 +199,83 @@
             </button>
           </div>
 
-          <!-- Fila de opciones: Carpeta, Prioridad, Estado y Fecha de Vencimiento -->
+          <!-- Fila de opciones: DROPDOWNS MODERNOS ESTILIZADOS -->
           <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
             
-            <!-- Selector de Carpeta -->
-            <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
-              <i class="fa-solid fa-folder text-slate-400 text-xs"></i>
-              <span class="text-slate-500 font-medium hidden sm:inline">Carpeta:</span>
-              <select id="task-folder-select" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer text-xs">
-                <!-- Llenado dinámico -->
-              </select>
+            <!-- 1. Custom Dropdown Carpeta -->
+            <div class="relative custom-dropdown" id="dropdown-task-folder">
+              <button 
+                type="button" 
+                class="dropdown-trigger flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200/70 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 transition"
+              >
+                <i class="fa-solid fa-folder text-indigo-500 text-xs"></i>
+                <span class="trigger-label truncate max-w-[120px]">Carpeta</span>
+                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-0.5"></i>
+              </button>
+              <div class="dropdown-menu hidden absolute top-full left-0 mt-1.5 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 z-30 animate-fadeIn text-xs max-h-56 overflow-y-auto">
+                <div class="dropdown-items-container space-y-0.5 p-1">
+                  <!-- Se llena dinámicamente desde app.js -->
+                </div>
+              </div>
+              <input type="hidden" id="task-folder-select" value="trabajo">
             </div>
 
-            <!-- Selector de Estado Inicial -->
-            <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
-              <i class="fa-solid fa-bars-progress text-slate-400 text-xs"></i>
-              <span class="text-slate-500 font-medium hidden sm:inline">Estado:</span>
-              <select id="task-status-select" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer text-xs">
-                <option value="pendiente">Pendiente ⏳</option>
-                <option value="en_curso">En Curso 🚀</option>
-                <option value="completado">Completado ✅</option>
-              </select>
+            <!-- 2. Custom Dropdown Estado -->
+            <div class="relative custom-dropdown" id="dropdown-task-status">
+              <button 
+                type="button" 
+                class="dropdown-trigger flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200/70 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 transition"
+              >
+                <span class="w-2 h-2 rounded-full bg-amber-400 status-dot"></span>
+                <span class="trigger-label">Pendiente ⏳</span>
+                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-0.5"></i>
+              </button>
+              <div class="dropdown-menu hidden absolute top-full left-0 mt-1.5 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 p-1 z-30 animate-fadeIn text-xs">
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700 transition" data-value="pendiente">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span>Pendiente ⏳</span>
+                </div>
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700 transition" data-value="en_curso">
+                  <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                  <span>En Curso 🚀</span>
+                </div>
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700 transition" data-value="completado">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>Completado ✅</span>
+                </div>
+              </div>
+              <input type="hidden" id="task-status-select" value="pendiente">
             </div>
 
-            <!-- Selector de Prioridad -->
-            <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
-              <i class="fa-solid fa-flag text-slate-400 text-xs"></i>
-              <select id="task-priority-select" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer text-xs">
-                <option value="media">Prioridad Media</option>
-                <option value="alta">Prioridad Alta 🔥</option>
-                <option value="baja">Prioridad Baja</option>
-              </select>
+            <!-- 3. Custom Dropdown Prioridad -->
+            <div class="relative custom-dropdown" id="dropdown-task-priority">
+              <button 
+                type="button" 
+                class="dropdown-trigger flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200/70 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 transition"
+              >
+                <i class="fa-solid fa-flag text-amber-500 text-xs priority-icon"></i>
+                <span class="trigger-label">Prioridad Media</span>
+                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-0.5"></i>
+              </button>
+              <div class="dropdown-menu hidden absolute top-full left-0 mt-1.5 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 p-1 z-30 animate-fadeIn text-xs">
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700 transition" data-value="media">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span>Prioridad Media</span>
+                </div>
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700 transition" data-value="alta">
+                  <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                  <span>Prioridad Alta 🔥</span>
+                </div>
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700 transition" data-value="baja">
+                  <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                  <span>Prioridad Baja</span>
+                </div>
+              </div>
+              <input type="hidden" id="task-priority-select" value="media">
             </div>
 
-            <!-- Fecha de Vencimiento -->
-            <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+            <!-- Fecha de Vencimiento Estilizada -->
+            <div class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200/70 border border-slate-200/80 px-3 py-1.5 rounded-xl transition">
               <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
               <span class="text-slate-500 font-medium text-[11px] hidden sm:inline">Vence:</span>
               <input 
@@ -245,7 +289,7 @@
             <button 
               type="button" 
               id="btn-toggle-description" 
-              class="text-indigo-600 hover:text-indigo-800 font-medium text-xs flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-indigo-50 transition"
+              class="text-indigo-600 hover:text-indigo-800 font-semibold text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 transition"
             >
               <i class="fa-solid fa-align-left text-[11px]"></i>
               <span id="desc-toggle-text">+ Agregar nota / detalle</span>
@@ -271,7 +315,7 @@
           <span class="text-slate-300">&bull;</span>
           <span id="status-task-count" class="font-medium">0 tareas</span>
         </div>
-        <p class="text-[11px] text-slate-400 hidden sm:block"><i class="fa-regular fa-hand-pointer mr-1"></i>Haz clic en cualquier tarea para editarla o gestionar sus mini tareas</p>
+        <p class="text-[11px] text-slate-400 hidden sm:block"><i class="fa-regular fa-hand-pointer mr-1"></i>Haz clic en cualquier tarea para ver detalles o mini tareas</p>
       </div>
 
       <!-- Lista de Tareas / Notas -->
@@ -287,7 +331,7 @@
   </div>
 
   <!-- ========================================================== -->
-  <!-- MODAL: DETALLE Y EDICIÓN COMPLETA DE TAREA (MINI TAREAS)   -->
+  <!-- MODAL: DETALLE Y EDICIÓN COMPLETA (CON DROPDOWNS MODERNOS) -->
   <!-- ========================================================== -->
   <div id="modal-task-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 hidden">
     <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-fadeIn my-auto flex flex-col max-h-[90vh]">
@@ -321,40 +365,99 @@
           >
         </div>
 
-        <!-- Barra de Configuración de la Tarea (Estado, Carpeta, Prioridad, Fecha de Vencimiento) -->
+        <!-- Barra de Configuración de la Tarea con Custom Dropdowns -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
           
-          <!-- Estado -->
-          <div>
-            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Estado:</label>
-            <select id="detail-status-select" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500">
-              <option value="pendiente">⏳ Pendiente</option>
-              <option value="en_curso">🚀 En Curso</option>
-              <option value="completado">✅ Completado</option>
-            </select>
+          <!-- Dropdown Estado en Modal -->
+          <div class="space-y-1">
+            <label class="block text-[10px] font-bold uppercase text-slate-400">Estado:</label>
+            <div class="relative custom-dropdown" id="dropdown-detail-status">
+              <button 
+                type="button" 
+                class="dropdown-trigger w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400 status-dot"></span>
+                  <span class="trigger-label">⏳ Pendiente</span>
+                </div>
+                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+              </button>
+              <div class="dropdown-menu hidden absolute top-full left-0 mt-1 w-full bg-white rounded-2xl shadow-xl border border-slate-100 p-1 z-30 animate-fadeIn text-xs">
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700" data-value="pendiente">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span>⏳ Pendiente</span>
+                </div>
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700" data-value="en_curso">
+                  <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                  <span>🚀 En Curso</span>
+                </div>
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700" data-value="completado">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>✅ Completado</span>
+                </div>
+              </div>
+              <input type="hidden" id="detail-status-select" value="pendiente">
+            </div>
           </div>
 
-          <!-- Carpeta -->
-          <div>
-            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Carpeta:</label>
-            <select id="detail-folder-select" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500">
-              <!-- Opciones dinámicas -->
-            </select>
+          <!-- Dropdown Carpeta en Modal -->
+          <div class="space-y-1">
+            <label class="block text-[10px] font-bold uppercase text-slate-400">Carpeta:</label>
+            <div class="relative custom-dropdown" id="dropdown-detail-folder">
+              <button 
+                type="button" 
+                class="dropdown-trigger w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+              >
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-2 h-2 rounded-full bg-indigo-500 folder-dot shrink-0"></span>
+                  <span class="trigger-label truncate">Carpeta</span>
+                </div>
+                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
+              </button>
+              <div class="dropdown-menu hidden absolute top-full left-0 mt-1 w-full bg-white rounded-2xl shadow-xl border border-slate-100 p-1 z-30 animate-fadeIn text-xs max-h-48 overflow-y-auto">
+                <div class="dropdown-items-container space-y-0.5">
+                  <!-- Llenado dinámico -->
+                </div>
+              </div>
+              <input type="hidden" id="detail-folder-select" value="trabajo">
+            </div>
           </div>
 
-          <!-- Prioridad -->
-          <div>
-            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Prioridad:</label>
-            <select id="detail-priority-select" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500">
-              <option value="alta">🔥 Alta</option>
-              <option value="media">Media</option>
-              <option value="baja">Baja</option>
-            </select>
+          <!-- Dropdown Prioridad en Modal -->
+          <div class="space-y-1">
+            <label class="block text-[10px] font-bold uppercase text-slate-400">Prioridad:</label>
+            <div class="relative custom-dropdown" id="dropdown-detail-priority">
+              <button 
+                type="button" 
+                class="dropdown-trigger w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400 priority-dot"></span>
+                  <span class="trigger-label">Media</span>
+                </div>
+                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+              </button>
+              <div class="dropdown-menu hidden absolute top-full left-0 mt-1 w-full bg-white rounded-2xl shadow-xl border border-slate-100 p-1 z-30 animate-fadeIn text-xs">
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700" data-value="media">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span>Prioridad Media</span>
+                </div>
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700" data-value="alta">
+                  <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                  <span>Prioridad Alta 🔥</span>
+                </div>
+                <div class="dropdown-item px-3 py-2 hover:bg-indigo-50/60 rounded-xl cursor-pointer flex items-center gap-2 font-medium text-slate-700" data-value="baja">
+                  <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                  <span>Prioridad Baja</span>
+                </div>
+              </div>
+              <input type="hidden" id="detail-priority-select" value="media">
+            </div>
           </div>
 
           <!-- Fecha de Vencimiento -->
-          <div>
-            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Fecha de Vencimiento:</label>
+          <div class="space-y-1">
+            <label class="block text-[10px] font-bold uppercase text-slate-400">Fecha de Vencimiento:</label>
             <input 
               id="detail-due-date-input" 
               type="date" 
