@@ -3,91 +3,330 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mi Lista de Tareas</title>
+  <title>TaskFlow Pro &bull; Gestor de Tareas y Notas</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex antialiased font-sans overflow-x-hidden">
 
-  <!-- Header 100% Responsive -->
-  <header class="bg-white border-b border-slate-200 shadow-xs sticky top-0 z-20">
-    <div class="max-w-2xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex justify-between items-center gap-2">
-      
-      <!-- Logo y Título -->
-      <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
-        <div class="w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xs">
-          <i class="fa-solid fa-check text-xs sm:text-sm"></i>
+  <!-- ========================================================== -->
+  <!-- BARRA LATERAL (SIDEBAR)                                    -->
+  <!-- ========================================================== -->
+  <aside 
+    id="sidebar" 
+    class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out flex flex-col shadow-lg md:shadow-none"
+  >
+    <!-- Logo & Nombre de la App -->
+    <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-sm shadow-indigo-200">
+          <i class="fa-solid fa-layer-group text-sm"></i>
         </div>
-        <h1 class="text-sm sm:text-lg font-bold text-slate-800 tracking-tight truncate">Mi Lista de Tareas</h1>
+        <div>
+          <h1 class="text-base font-bold text-slate-800 tracking-tight leading-none">TaskFlow Pro</h1>
+          <p class="text-[11px] text-slate-400 font-medium mt-0.5">Notas & Tareas en AWS</p>
+        </div>
       </div>
-
-      <!-- Botón de Configuración adaptado para móvil y desktop -->
-      <button 
-        id="btn-open-modal" 
-        class="shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-300 transition shadow-xs active:scale-95"
-        title="Ver estado de infraestructura y telemetría"
-      >
-        <span id="header-status-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
-        <i class="fa-solid fa-gear text-slate-500 text-xs"></i>
-        <span class="hidden sm:inline">Configuración & DevOps</span>
-        <span class="sm:hidden text-[11px] font-semibold">DevOps</span>
+      <!-- Botón cerrar sidebar en móvil -->
+      <button id="btn-close-sidebar" class="md:hidden text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
+        <i class="fa-solid fa-xmark text-lg"></i>
       </button>
     </div>
-  </header>
 
-  <!-- Contenido Principal -->
-  <main class="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8 flex-1 w-full space-y-3 sm:space-y-4">
-
-    <!-- Card Principal de Tareas -->
-    <div class="bg-white rounded-xl sm:rounded-2xl shadow-xs border border-slate-200 p-3.5 sm:p-6 space-y-4">
+    <!-- Navegación y Vistas Rápidas -->
+    <div class="flex-1 overflow-y-auto p-3 space-y-6">
       
-      <!-- Formulario para agregar tarea (flexible en móvil) -->
-      <form id="todo-form" class="flex flex-col sm:flex-row gap-2">
-        <input 
-          id="todo-input" 
-          type="text" 
-          placeholder="¿Qué tienes pendiente por hacer?..." 
-          class="flex-1 w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
-          required
-        >
-        <button 
-          type="submit" 
-          class="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-medium rounded-xl text-sm transition flex items-center gap-2 shadow-xs shrink-0"
-        >
-          <i class="fa-solid fa-plus text-xs"></i>
-          <span>Agregar</span>
+      <!-- Sección: Vistas Rápidas -->
+      <div class="space-y-1">
+        <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Vistas Rápidas</span>
+        
+        <button class="nav-view-btn active w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition" data-view="all">
+          <span class="flex items-center gap-2.5">
+            <i class="fa-solid fa-inbox text-indigo-600 w-4 text-center"></i>
+            <span>Todas las tareas</span>
+          </span>
+          <span id="badge-all-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">0</span>
         </button>
-      </form>
 
-      <!-- Barra de filtros y contador (con flex-wrap para pantallas angostas) -->
-      <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
-        <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
-          <button class="filter-btn px-2 sm:px-2.5 py-1 rounded-md font-medium text-xs bg-white text-indigo-600 shadow-xs" data-filter="all">Todas</button>
-          <button class="filter-btn px-2 sm:px-2.5 py-1 rounded-md font-medium text-xs text-slate-600 hover:text-slate-900" data-filter="pending">Pendientes</button>
-          <button class="filter-btn px-2 sm:px-2.5 py-1 rounded-md font-medium text-xs text-slate-600 hover:text-slate-900" data-filter="completed">Completadas</button>
-        </div>
-        <span id="tasks-count" class="font-medium text-slate-500 text-[11px] sm:text-xs">0 tareas</span>
+        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="pending">
+          <span class="flex items-center gap-2.5">
+            <i class="fa-solid fa-clock text-amber-500 w-4 text-center"></i>
+            <span>Pendientes</span>
+          </span>
+          <span id="badge-pending-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">0</span>
+        </button>
+
+        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="completed">
+          <span class="flex items-center gap-2.5">
+            <i class="fa-solid fa-circle-check text-emerald-500 w-4 text-center"></i>
+            <span>Completadas</span>
+          </span>
+          <span id="badge-completed-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">0</span>
+        </button>
+
+        <button class="nav-view-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-view="priority-high">
+          <span class="flex items-center gap-2.5">
+            <i class="fa-solid fa-fire text-rose-500 w-4 text-center"></i>
+            <span>Prioridad Alta</span>
+          </span>
+          <span id="badge-high-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600">0</span>
+        </button>
       </div>
 
-      <!-- Lista de tareas -->
-      <div id="todo-list" class="space-y-2 pt-1">
-        <div class="text-center py-8 text-slate-400 text-sm">
-          <i class="fa-solid fa-spinner fa-spin text-xl mb-2 text-indigo-500"></i>
+      <!-- Sección: Carpetas / Categorías personalizables -->
+      <div class="space-y-1.5">
+        <div class="px-3 flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Mis Carpetas</span>
+          <button 
+            id="btn-open-new-folder" 
+            class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover:bg-indigo-50 px-2 py-0.5 rounded-md transition"
+            title="Crear nueva carpeta"
+          >
+            <i class="fa-solid fa-plus text-[10px]"></i>
+            <span>Nueva</span>
+          </button>
+        </div>
+
+        <!-- Lista dinámica de carpetas -->
+        <div id="folders-list" class="space-y-0.5">
+          <!-- Renderizado dinámicamente desde app.js -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer del Sidebar con Botón DevOps y Estado -->
+    <div class="p-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
+      <!-- Botón de Telemetría DevOps -->
+      <button 
+        id="btn-open-devops" 
+        class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition shadow-xs group"
+      >
+        <div class="flex items-center gap-2">
+          <span id="sidebar-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <span class="font-semibold text-slate-700">DevOps & AWS ECS</span>
+        </div>
+        <i class="fa-solid fa-gear text-slate-400 group-hover:text-indigo-600 transition"></i>
+      </button>
+
+      <div class="flex justify-between items-center px-1 text-[10px] text-slate-400">
+        <span>UTP &bull; Tópicos Especiales 1</span>
+        <span class="font-mono">v2.0</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Overlay para cerrar sidebar en móvil -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-30 hidden md:hidden"></div>
+
+  <!-- ========================================================== -->
+  <!-- ÁREA DE CONTENIDO PRINCIPAL                                -->
+  <!-- ========================================================== -->
+  <div class="flex-1 md:ml-72 flex flex-col min-h-screen min-w-0">
+    
+    <!-- Topbar Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 shadow-xs">
+      
+      <!-- Botón Menú Móvil + Título de la Vista Actual -->
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="btn-toggle-sidebar" class="md:hidden text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+        <div class="min-w-0">
+          <h2 id="current-view-title" class="text-base sm:text-lg font-bold text-slate-800 tracking-tight truncate flex items-center gap-2">
+            <i class="fa-solid fa-inbox text-indigo-600 text-sm"></i>
+            <span>Todas las tareas</span>
+          </h2>
+          <p id="current-view-subtitle" class="text-xs text-slate-400 hidden sm:block">Organiza, clasifica y gestiona tus actividades</p>
+        </div>
+      </div>
+
+      <!-- Barra de búsqueda rápida -->
+      <div class="flex items-center gap-2">
+        <div class="relative w-36 sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input 
+            id="search-input" 
+            type="text" 
+            placeholder="Buscar tarea o nota..." 
+            class="w-full pl-8 pr-3 py-1.5 bg-slate-100 border border-transparent rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:outline-none transition"
+          >
+        </div>
+
+        <button 
+          id="btn-quick-new-task" 
+          class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-indigo-100 transition shrink-0"
+        >
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span class="hidden sm:inline">Nueva Tarea</span>
+        </button>
+      </div>
+
+    </header>
+
+    <!-- Contenido de la Página -->
+    <main class="flex-1 p-3 sm:p-6 max-w-4xl w-full mx-auto space-y-4">
+
+      <!-- Formulario para agregar Tarea / Nota con selector de Carpeta y Prioridad -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-3">
+        <form id="create-task-form" class="space-y-3">
+          
+          <!-- Fila principal: Título y Botón Agregar -->
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input 
+              id="task-title-input" 
+              type="text" 
+              placeholder="Escribe el título de tu tarea o nota..." 
+              class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition"
+              required
+            >
+            <button 
+              type="submit" 
+              class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs shrink-0"
+            >
+              <i class="fa-solid fa-plus"></i>
+              <span>Guardar Tarea</span>
+            </button>
+          </div>
+
+          <!-- Fila de opciones: Descripción, Carpeta y Prioridad -->
+          <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            
+            <!-- Selector de Carpeta -->
+            <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
+              <i class="fa-solid fa-folder text-slate-400 text-xs"></i>
+              <span class="text-slate-500 font-medium">Carpeta:</span>
+              <select id="task-folder-select" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer">
+                <!-- Se llena dinámicamente -->
+              </select>
+            </div>
+
+            <!-- Selector de Prioridad -->
+            <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
+              <i class="fa-solid fa-flag text-slate-400 text-xs"></i>
+              <span class="text-slate-500 font-medium">Prioridad:</span>
+              <select id="task-priority-select" class="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer">
+                <option value="media">Media</option>
+                <option value="alta">Alta 🔥</option>
+                <option value="baja">Baja</option>
+              </select>
+            </div>
+
+            <!-- Botón para mostrar campo de Descripción / Notas -->
+            <button 
+              type="button" 
+              id="btn-toggle-description" 
+              class="text-indigo-600 hover:text-indigo-800 font-medium text-xs flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-indigo-50 transition"
+            >
+              <i class="fa-solid fa-align-left text-[11px]"></i>
+              <span id="desc-toggle-text">+ Agregar nota / detalle</span>
+            </button>
+          </div>
+
+          <!-- Campo expandible de Descripción / Nota -->
+          <div id="description-field-container" class="hidden">
+            <textarea 
+              id="task-desc-input" 
+              rows="2" 
+              placeholder="Detalles adicionales, enlaces o notas sobre esta tarea..." 
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-700 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:outline-none transition resize-none"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+
+      <!-- Barra de Filtro de Estado & Contador -->
+      <div class="flex justify-between items-center px-1 text-xs text-slate-500">
+        <div class="flex items-center gap-1.5">
+          <span class="font-semibold text-slate-700" id="filter-display-label">Todas las notas</span>
+          <span class="text-slate-300">&bull;</span>
+          <span id="status-task-count" class="font-medium">0 tareas</span>
+        </div>
+      </div>
+
+      <!-- Lista de Tareas / Notas -->
+      <div id="tasks-container" class="space-y-2">
+        <div class="text-center py-12 text-slate-400 text-sm">
+          <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-500"></i>
           <p>Cargando tareas...</p>
         </div>
       </div>
-    </div>
 
-  </main>
+    </main>
 
-  <!-- Footer -->
-  <footer class="py-3 sm:py-4 text-center text-[11px] sm:text-xs text-slate-400">
-    <p>To-Do List App &bull; Desplegado en AWS Fargate</p>
-  </footer>
+  </div>
 
   <!-- ========================================================== -->
-  <!-- MODAL: Configuración, Telemetría y Pipelines DevOps        -->
+  <!-- MODAL: CREAR NUEVA CARPETA                                -->
+  <!-- ========================================================== -->
+  <div id="modal-new-folder" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden animate-fadeIn my-auto">
+      
+      <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-folder-plus text-indigo-600"></i>
+          <span>Crear Nueva Carpeta</span>
+        </h3>
+        <button id="btn-close-folder-modal" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="create-folder-form" class="p-5 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre de la carpeta:</label>
+          <input 
+            id="folder-name-input" 
+            type="text" 
+            placeholder="Ejemplo: Proyectos, Finanzas, UTP..." 
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:bg-white focus:border-indigo-500 focus:outline-none"
+            required
+            autofocus
+          >
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Color distintivo:</label>
+          <div class="flex gap-2" id="color-picker-container">
+            <button type="button" class="color-choice w-6 h-6 rounded-full bg-indigo-600 ring-2 ring-indigo-400 ring-offset-2" data-color="#4f46e5"></button>
+            <button type="button" class="color-choice w-6 h-6 rounded-full bg-sky-500" data-color="#0ea5e9"></button>
+            <button type="button" class="color-choice w-6 h-6 rounded-full bg-emerald-500" data-color="#10b981"></button>
+            <button type="button" class="color-choice w-6 h-6 rounded-full bg-amber-500" data-color="#f59e0b"></button>
+            <button type="button" class="color-choice w-6 h-6 rounded-full bg-rose-500" data-color="#f43f5e"></button>
+            <button type="button" class="color-choice w-6 h-6 rounded-full bg-purple-600" data-color="#9333ea"></button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Ícono:</label>
+          <select id="folder-icon-select" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-700 focus:bg-white focus:outline-none">
+            <option value="fa-folder">📁 Carpeta Estándar</option>
+            <option value="fa-briefcase">💼 Trabajo / Negocios</option>
+            <option value="fa-graduation-cap">🎓 Universidad / Estudio</option>
+            <option value="fa-user">👤 Personal</option>
+            <option value="fa-lightbulb">💡 Ideas / Creatividad</option>
+            <option value="fa-code">💻 Desarrollo & Código</option>
+            <option value="fa-heart">❤️ Salud & Bienestar</option>
+            <option value="fa-cart-shopping">🛒 Compras</option>
+          </select>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" id="btn-cancel-folder" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium text-xs rounded-xl transition">
+            Cancelar
+          </button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-xs transition">
+            Crear Carpeta
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- MODAL: PANEL DEVOPS & TELEMETRÍA AWS                       -->
   <!-- ========================================================== -->
   <div id="devops-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-fadeIn my-auto">
@@ -103,13 +342,13 @@
             <p class="text-[10px] sm:text-[11px] text-slate-400">Métricas de contenedor ECS y pipelines</p>
           </div>
         </div>
-        <button id="btn-close-modal" class="text-slate-400 hover:text-white p-1 rounded-lg transition">
+        <button id="btn-close-devops-modal" class="text-slate-400 hover:text-white p-1 rounded-lg transition">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
       <!-- Modal Body -->
-      <div class="p-3.5 sm:p-5 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
+      <div class="p-4 sm:p-5 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
         
         <!-- Estado de Conexión & Métricas del Contenedor -->
         <div>
@@ -117,21 +356,21 @@
             <i class="fa-solid fa-server text-indigo-500"></i> Telemetría de Amazon ECS (Fargate)
           </h3>
           <div class="grid grid-cols-2 gap-2 text-xs">
-            <div class="bg-slate-50 border border-slate-200 p-2 sm:p-2.5 rounded-xl">
-              <span class="text-slate-400 block text-[9px] sm:text-[10px] uppercase font-semibold">Estado Backend</span>
-              <span id="modal-status-text" class="font-bold text-amber-600 mt-0.5 inline-block text-[11px] sm:text-xs">Consultando...</span>
+            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
+              <span class="text-slate-400 block text-[9px] uppercase font-semibold">Estado Backend</span>
+              <span id="modal-status-text" class="font-bold text-emerald-600 mt-0.5 inline-block text-xs">En Línea</span>
             </div>
-            <div class="bg-slate-50 border border-slate-200 p-2 sm:p-2.5 rounded-xl">
-              <span class="text-slate-400 block text-[9px] sm:text-[10px] uppercase font-semibold">Container ID</span>
-              <span id="modal-hostname" class="font-mono font-medium text-slate-700 truncate mt-0.5 block text-[11px] sm:text-xs">-</span>
+            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
+              <span class="text-slate-400 block text-[9px] uppercase font-semibold">Container ID / Host</span>
+              <span id="modal-hostname" class="font-mono font-medium text-slate-700 truncate mt-0.5 block text-xs">-</span>
             </div>
-            <div class="bg-slate-50 border border-slate-200 p-2 sm:p-2.5 rounded-xl">
-              <span class="text-slate-400 block text-[9px] sm:text-[10px] uppercase font-semibold">Latencia API</span>
-              <span id="modal-latency" class="font-medium text-slate-700 mt-0.5 inline-block text-[11px] sm:text-xs">- ms</span>
+            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
+              <span class="text-slate-400 block text-[9px] uppercase font-semibold">Latencia API</span>
+              <span id="modal-latency" class="font-medium text-slate-700 mt-0.5 inline-block text-xs">- ms</span>
             </div>
-            <div class="bg-slate-50 border border-slate-200 p-2 sm:p-2.5 rounded-xl">
-              <span class="text-slate-400 block text-[9px] sm:text-[10px] uppercase font-semibold">Uptime Backend</span>
-              <span id="modal-uptime" class="font-medium text-slate-700 mt-0.5 inline-block text-[11px] sm:text-xs">-</span>
+            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
+              <span class="text-slate-400 block text-[9px] uppercase font-semibold">Uptime Backend</span>
+              <span id="modal-uptime" class="font-medium text-slate-700 mt-0.5 inline-block text-xs">-</span>
             </div>
           </div>
         </div>
@@ -142,27 +381,27 @@
             <i class="fa-solid fa-diagram-project text-amber-500"></i> Los Tres Pipelines CI/CD
           </h3>
           <div class="space-y-1.5 text-xs">
-            <div class="bg-slate-50 border border-slate-200 p-2 sm:p-2.5 rounded-xl flex items-start gap-2 sm:gap-3">
-              <span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded font-semibold text-[9px] sm:text-[10px] mt-0.5 shrink-0">Pipeline 1</span>
+            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-start gap-2.5">
+              <span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded font-semibold text-[10px] shrink-0">P1</span>
               <div>
-                <p class="font-semibold text-slate-800 text-[11px] sm:text-xs">Infraestructura (Terraform)</p>
-                <p class="text-[10px] sm:text-[11px] text-slate-500">VPC, ECR, Clúster ECS Fargate y ALB.</p>
+                <p class="font-semibold text-slate-800">Infraestructura (Terraform)</p>
+                <p class="text-[10px] text-slate-500">VPC, Subredes, ECR, Clúster ECS Fargate y ALB.</p>
               </div>
             </div>
 
-            <div class="bg-slate-50 border border-slate-200 p-2 sm:p-2.5 rounded-xl flex items-start gap-2 sm:gap-3">
-              <span class="px-1.5 py-0.5 bg-sky-100 text-sky-800 rounded font-semibold text-[9px] sm:text-[10px] mt-0.5 shrink-0">Pipeline 2</span>
+            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-start gap-2.5">
+              <span class="px-1.5 py-0.5 bg-sky-100 text-sky-800 rounded font-semibold text-[10px] shrink-0">P2</span>
               <div>
-                <p class="font-semibold text-slate-800 text-[11px] sm:text-xs">Construcción y Publicación (CI)</p>
-                <p class="text-[10px] sm:text-[11px] text-slate-500">Docker build & push a Amazon ECR.</p>
+                <p class="font-semibold text-slate-800">Construcción y Publicación (CI)</p>
+                <p class="text-[10px] text-slate-500">Docker build & push a Amazon ECR.</p>
               </div>
             </div>
 
-            <div class="bg-slate-50 border border-slate-200 p-2 sm:p-2.5 rounded-xl flex items-start gap-2 sm:gap-3">
-              <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[9px] sm:text-[10px] mt-0.5 shrink-0">Pipeline 3</span>
+            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-start gap-2.5">
+              <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px] shrink-0">P3</span>
               <div>
-                <p class="font-semibold text-slate-800 text-[11px] sm:text-xs">Despliegue Continuo (CD)</p>
-                <p class="text-[10px] sm:text-[11px] text-slate-500">Rolling update automático en ECS Fargate.</p>
+                <p class="font-semibold text-slate-800">Despliegue Continuo (CD)</p>
+                <p class="text-[10px] text-slate-500">Rolling update automático en ECS Fargate.</p>
               </div>
             </div>
           </div>
@@ -194,9 +433,9 @@
       <!-- Modal Footer -->
       <div class="bg-slate-50 px-4 py-2.5 border-t border-slate-100 flex justify-between items-center">
         <button id="btn-refresh-telemetry" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
-          <i class="fa-solid fa-rotate text-xs"></i> Actualizar
+          <i class="fa-solid fa-rotate text-xs"></i> Actualizar Métricas
         </button>
-        <button id="btn-close-modal-footer" class="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs rounded-lg transition">
+        <button id="btn-close-devops-modal-footer" class="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs rounded-lg transition">
           Cerrar
         </button>
       </div>

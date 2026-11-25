@@ -1,4 +1,4 @@
-/* Estilos del To-Do List y Modal */
+/* Estilos avanzados para TaskFlow Pro */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -14,16 +14,25 @@
   animation: fadeIn 0.15s ease-out forwards;
 }
 
-.task-item {
-  transition: all 0.2s ease;
+/* Items de navegación del sidebar */
+.nav-view-btn.active, .folder-item.active {
+  background-color: #f1f5f9;
+  color: #4f46e5;
+  font-weight: 700;
+}
+
+/* Cards de tareas */
+.task-card {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   word-break: break-word;
 }
 
-.task-item:hover {
-  background-color: #f8fafc;
+.task-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
 }
 
-.task-completed span {
+.task-completed .task-title {
   text-decoration: line-through;
   color: #94a3b8;
 }
@@ -31,6 +40,40 @@
 /* Custom checkbox */
 input[type="checkbox"] {
   accent-color: #4f46e5;
-  min-width: 1rem;
-  min-height: 1rem;
+  min-width: 1.1rem;
+  min-height: 1.1rem;
+}
+
+/* Color choices en modal */
+.color-choice {
+  transition: transform 0.15s ease;
+  cursor: pointer;
+}
+
+.color-choice:hover {
+  transform: scale(1.15);
+}
+
+.color-choice.selected {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+
+/* Scrollbar estilizado */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
