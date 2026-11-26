@@ -576,24 +576,24 @@ function updateDetailBadges() {
   const priority = detailPrioritySelect.value;
 
   if (status === 'completado') {
-    detailStatusPill.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800';
+    detailStatusPill.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400';
     detailStatusPill.textContent = 'Completado ✅';
   } else if (status === 'en_curso') {
-    detailStatusPill.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800';
+    detailStatusPill.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-400';
     detailStatusPill.textContent = 'En Curso 🚀';
   } else {
-    detailStatusPill.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800';
+    detailStatusPill.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400';
     detailStatusPill.textContent = 'Pendiente ⏳';
   }
 
   if (priority === 'alta') {
-    detailPriorityPill.className = 'px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700';
+    detailPriorityPill.className = 'px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400';
     detailPriorityPill.textContent = 'Prioridad Alta 🔥';
   } else if (priority === 'media') {
-    detailPriorityPill.className = 'px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700';
+    detailPriorityPill.className = 'px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400';
     detailPriorityPill.textContent = 'Prioridad Media';
   } else {
-    detailPriorityPill.className = 'px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200 text-slate-600';
+    detailPriorityPill.className = 'px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
     detailPriorityPill.textContent = 'Prioridad Baja';
   }
 }
@@ -614,28 +614,28 @@ function renderModalSubtasks() {
 
   if (subtasks.length === 0) {
     detailSubtasksList.innerHTML = `
-      <p class="text-[11px] text-slate-400 italic py-2">No hay mini tareas aún. Agrega una abajo para dividir esta tarea en pasos.</p>
+      <p class="text-[11px] text-slate-400 dark:text-slate-400 italic py-2">No hay mini tareas aún. Agrega una abajo para dividir esta tarea en pasos.</p>
     `;
     return;
   }
 
   detailSubtasksList.innerHTML = subtasks.map((st, index) => `
-    <div class="subtask-item flex items-center justify-between p-2 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition group ${st.done ? 'subtask-completed' : ''}">
+    <div class="subtask-item flex items-center justify-between p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition group ${st.done ? 'subtask-completed' : ''}">
       <label class="flex items-center gap-2.5 flex-1 cursor-pointer select-none min-w-0 mr-2">
         <input 
           type="checkbox" 
           ${st.done ? 'checked' : ''} 
           onchange="toggleModalSubtask(${index}, this.checked)"
-          class="w-3.5 h-3.5 rounded text-indigo-600 border-slate-300 focus:ring-0 cursor-pointer shrink-0"
+          class="w-3.5 h-3.5 rounded text-indigo-600 border-slate-300 dark:border-slate-600 dark:bg-slate-800 focus:ring-0 cursor-pointer shrink-0"
         >
-        <span class="text-xs font-medium ${st.done ? 'text-slate-400' : 'text-slate-700'} break-words">
+        <span class="text-xs font-medium ${st.done ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'} break-words">
           ${escapeHtml(st.title)}
         </span>
       </label>
       <button 
         type="button" 
         onclick="deleteModalSubtask(${index})" 
-        class="text-slate-300 hover:text-rose-500 p-1 rounded transition opacity-0 group-hover:opacity-100 shrink-0"
+        class="text-slate-300 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 p-1 rounded transition opacity-0 group-hover:opacity-100 shrink-0"
         title="Eliminar mini tarea"
       >
         <i class="fa-solid fa-xmark text-xs"></i>
@@ -1124,13 +1124,13 @@ function renderTasks() {
   if (filtered.length === 0) {
     const isFiltered = currentView !== 'all' || searchTerm;
     tasksContainer.innerHTML = `
-      <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 space-y-3">
-        <div class="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center text-xl">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 text-center text-slate-400 space-y-3">
+        <div class="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 dark:text-indigo-400 flex items-center justify-center text-xl">
           <i class="fa-regular fa-clipboard"></i>
         </div>
         <div class="space-y-1">
-          <p class="text-xs font-bold text-slate-700">${isFiltered ? 'No hay tareas en esta sección o búsqueda.' : 'No tienes tareas registradas todavía.'}</p>
-          <p class="text-[11px] text-slate-400">${isFiltered ? 'Puedes cambiar de vista en el menú lateral o agregar una nueva tarea.' : 'Comienza creando tu primera tarea personal o de trabajo.'}</p>
+          <p class="text-xs font-bold text-slate-700 dark:text-slate-200">${isFiltered ? 'No hay tareas en esta sección o búsqueda.' : 'No tienes tareas registradas todavía.'}</p>
+          <p class="text-[11px] text-slate-400 dark:text-slate-400">${isFiltered ? 'Puedes cambiar de vista en el menú lateral o agregar una nueva tarea.' : 'Comienza creando tu primera tarea personal o de trabajo.'}</p>
         </div>
         <button 
           onclick="openNewTaskModal()" 
@@ -1151,20 +1151,20 @@ function renderTasks() {
 
     let statusBadge = '';
     if (task.status === 'completado') {
-      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1"><i class="fa-solid fa-check text-[9px]"></i>Completada</span>`;
+      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1"><i class="fa-solid fa-check text-[9px]"></i>Completada</span>`;
     } else if (task.status === 'en_curso') {
-      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200/60 flex items-center gap-1"><i class="fa-solid fa-spinner fa-spin-pulse text-[9px]"></i>En Curso</span>`;
+      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-400 border border-sky-200/60 dark:border-sky-800/60 flex items-center gap-1"><i class="fa-solid fa-spinner fa-spin-pulse text-[9px]"></i>En Curso</span>`;
     } else {
-      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center gap-1"><i class="fa-solid fa-clock text-[9px]"></i>Pendiente</span>`;
+      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60 flex items-center gap-1"><i class="fa-solid fa-clock text-[9px]"></i>Pendiente</span>`;
     }
 
     let priorityBadge = '';
     if (task.priority === 'alta') {
-      priorityBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100"><i class="fa-solid fa-fire text-[9px] mr-1"></i>Alta</span>`;
+      priorityBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800/60"><i class="fa-solid fa-fire text-[9px] mr-1"></i>Alta</span>`;
     } else if (task.priority === 'media') {
-      priorityBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-600 border border-amber-100">Media</span>`;
+      priorityBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/60">Media</span>`;
     } else {
-      priorityBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">Baja</span>`;
+      priorityBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Baja</span>`;
     }
 
     let dueDatePill = '';
@@ -1172,7 +1172,7 @@ function renderTasks() {
       const due = new Date(task.dueDate + 'T00:00:00');
       const isPast = due < new Date().setHours(0,0,0,0);
       dueDatePill = `
-        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${isPast && task.status !== 'completado' ? 'bg-rose-100 text-rose-800 font-semibold' : 'bg-slate-100 text-slate-600'}">
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${isPast && task.status !== 'completado' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 font-semibold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}">
           <i class="fa-regular fa-calendar text-[9px]"></i>
           <span>Vence: ${due.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
         </span>
@@ -1185,10 +1185,10 @@ function renderTasks() {
       const compCount = subtasks.filter(s => s.done).length;
       const pct = Math.round((compCount / subtasks.length) * 100);
       subtasksBadge = `
-        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-medium border border-indigo-100">
+        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-medium border border-indigo-100 dark:border-indigo-900/60">
           <i class="fa-solid fa-list-check text-[9px]"></i>
           <span>${compCount}/${subtasks.length} mini tareas</span>
-          <div class="w-10 bg-indigo-200 rounded-full h-1 overflow-hidden ml-1">
+          <div class="w-10 bg-indigo-200 dark:bg-slate-700 rounded-full h-1 overflow-hidden ml-1">
             <div class="bg-indigo-600 h-1 rounded-full" style="width: ${pct}%;"></div>
           </div>
         </div>
@@ -1199,7 +1199,7 @@ function renderTasks() {
 
     return `
       <div 
-        class="task-card bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 flex items-start gap-3 ${isDone ? 'task-completed bg-slate-50/70' : ''}" 
+        class="task-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3.5 sm:p-4 flex items-start gap-3 ${isDone ? 'task-completed bg-slate-50/70 dark:bg-slate-900/50' : ''}" 
         onclick="openTaskDetailModal(${task.id})"
       >
         <input 
@@ -1207,7 +1207,7 @@ function renderTasks() {
           ${isDone ? 'checked' : ''} 
           onclick="event.stopPropagation()"
           onchange="toggleTaskQuick(${task.id}, this.checked)"
-          class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-0 cursor-pointer shrink-0"
+          class="mt-1 w-4 h-4 rounded text-indigo-600 border-slate-300 dark:border-slate-600 dark:bg-slate-800 focus:ring-0 cursor-pointer shrink-0"
         >
 
         <div class="flex-1 min-w-0 space-y-1.5">
@@ -1222,19 +1222,19 @@ function renderTasks() {
             ${subtasksBadge}
           </div>
 
-          <h4 class="task-title text-sm font-semibold text-slate-800 break-words leading-snug">
+          <h4 class="task-title text-sm font-semibold text-slate-800 dark:text-slate-100 break-words leading-snug">
             ${escapeHtml(task.title)}
           </h4>
 
           ${task.description ? `
-            <p class="text-xs text-slate-500 break-words line-clamp-2 leading-relaxed bg-slate-50/80 p-2 rounded-xl border border-slate-100 font-sans">
+            <p class="text-xs text-slate-500 dark:text-slate-400 break-words line-clamp-2 leading-relaxed bg-slate-50/80 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-100 dark:border-slate-800 font-sans">
               ${escapeHtml(task.description)}
             </p>
           ` : ''}
 
-          <div class="text-[10px] text-slate-400 pt-0.5 flex items-center justify-between">
+          <div class="text-[10px] text-slate-400 dark:text-slate-400 pt-0.5 flex items-center justify-between">
             <span><i class="fa-regular fa-clock mr-1 text-[9px]"></i>${new Date(task.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-            <span class="text-indigo-600 font-medium hover:underline flex items-center gap-1">
+            <span class="text-indigo-600 dark:text-indigo-400 font-medium hover:underline flex items-center gap-1">
               <span>Editar & pasos</span> <i class="fa-solid fa-chevron-right text-[8px]"></i>
             </span>
           </div>
@@ -1242,7 +1242,7 @@ function renderTasks() {
 
         <button 
           onclick="event.stopPropagation(); deleteTask(${task.id})" 
-          class="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg transition shrink-0 active:scale-90"
+          class="text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 p-1.5 rounded-lg transition shrink-0 active:scale-90"
           title="Eliminar tarea"
         >
           <i class="fa-solid fa-trash-can text-xs"></i>
@@ -1450,10 +1450,10 @@ function updateAuthUI() {
 
     if (currentUser.isAdmin) {
       topbarUserRoleBadge.textContent = 'Admin';
-      topbarUserRoleBadge.className = 'text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded';
+      topbarUserRoleBadge.className = 'text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 rounded';
     } else {
       topbarUserRoleBadge.textContent = 'Usuario';
-      topbarUserRoleBadge.className = 'text-[9px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded';
+      topbarUserRoleBadge.className = 'text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded';
     }
 
     // Sidebar
@@ -1461,10 +1461,10 @@ function updateAuthUI() {
     sidebarAvatarInitial.textContent = (currentUser.username[0] || 'U').toUpperCase();
     if (currentUser.isAdmin) {
       sidebarUserRole.textContent = 'Administrador';
-      sidebarUserRole.className = 'text-[9px] text-amber-600 font-bold uppercase block leading-none';
+      sidebarUserRole.className = 'text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase block leading-none';
     } else {
       sidebarUserRole.textContent = 'Usuario Estándar';
-      sidebarUserRole.className = 'text-[9px] text-slate-500 font-semibold uppercase block leading-none';
+      sidebarUserRole.className = 'text-[9px] text-slate-500 dark:text-slate-400 font-semibold uppercase block leading-none';
     }
     btnSidebarAuth.title = 'Cerrar sesión';
     sidebarAuthIcon.className = 'fa-solid fa-right-from-bracket text-xs text-rose-500';

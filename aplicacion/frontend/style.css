@@ -124,8 +124,9 @@ html.dark #sidebar .border-t {
   border-color: #1f2937 !important;
 }
 
-html.dark #sidebar .bg-slate-50\/50 {
-  background-color: rgba(17, 24, 39, 0.7) !important;
+html.dark #sidebar .bg-slate-50\/50,
+html.dark #sidebar .bg-slate-50 {
+  background-color: rgba(17, 24, 39, 0.9) !important;
 }
 
 html.dark #sidebar h1 {
@@ -209,6 +210,15 @@ html.dark header {
   border-color: #1f2937 !important;
 }
 
+html.dark #current-view-title,
+html.dark #current-view-title span {
+  color: #f8fafc !important;
+}
+
+html.dark #current-view-subtitle {
+  color: #94a3b8 !important;
+}
+
 html.dark #search-input {
   background-color: #0b0f19 !important;
   border-color: #1f2937 !important;
@@ -237,6 +247,18 @@ html.dark #btn-toggle-sidebar {
 }
 
 html.dark #filter-display-label {
+  color: #f8fafc !important;
+}
+
+/* Empty State en Modo Oscuro */
+html.dark #tasks-container > div.bg-white,
+html.dark #tasks-container .bg-white {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+  color: #cbd5e1 !important;
+}
+
+html.dark #tasks-container .text-slate-700 {
   color: #f8fafc !important;
 }
 
@@ -276,6 +298,13 @@ html.dark .task-card button[title="Eliminar tarea"] {
 
 html.dark .task-card button[title="Eliminar tarea"]:hover {
   color: #f43f5e !important;
+}
+
+/* Checkboxes */
+html.dark input[type="checkbox"] {
+  background-color: #111827 !important;
+  border-color: #4b5563 !important;
+  color-scheme: dark;
 }
 
 /* Badges y Pastillas en Modo Oscuro */
@@ -331,17 +360,38 @@ html.dark #modal-confirm > div {
   color: #f8fafc !important;
 }
 
+/* Encabezados y Pies de Modales (Sobreescribe fondos grises) */
 html.dark #modal-new-task .border-b,
 html.dark #modal-task-detail .border-b,
 html.dark #modal-new-folder .border-b,
 html.dark #modal-auth .border-b,
 html.dark #modal-devops .border-b,
-html.dark #modal-confirm .border-t {
+html.dark #modal-new-task .border-t,
+html.dark #modal-task-detail .border-t,
+html.dark #modal-new-folder .border-t,
+html.dark #modal-auth .border-t,
+html.dark #modal-devops .border-t,
+html.dark #modal-confirm .border-t,
+html.dark #modal-new-task .bg-slate-50\/60,
+html.dark #modal-task-detail .bg-slate-50\/70,
+html.dark #modal-auth .bg-slate-50\/60,
+html.dark #modal-devops .bg-slate-50 {
   border-color: #1f2937 !important;
   background-color: #111827 !important;
 }
 
+/* Grillas contenedoras de dropdowns en modales */
+html.dark #modal-new-task .bg-slate-50\/80,
+html.dark #modal-task-detail .bg-slate-50,
+html.dark #modal-new-task .grid,
+html.dark #modal-task-detail .grid {
+  background-color: #0b0f19 !important;
+  border-color: #1f2937 !important;
+}
+
+/* Títulos y Etiquetas dentro de modales */
 html.dark #modal-new-task h2,
+html.dark #modal-new-task h3,
 html.dark #modal-task-detail h3,
 html.dark #modal-new-folder h3,
 html.dark #modal-auth h2,
@@ -350,6 +400,52 @@ html.dark #modal-confirm h3 {
   color: #f8fafc !important;
 }
 
+html.dark #modal-new-task label,
+html.dark #modal-task-detail label,
+html.dark #modal-new-folder label,
+html.dark #modal-auth label,
+html.dark #modal-devops label {
+  color: #cbd5e1 !important;
+}
+
+html.dark #modal-task-detail h4,
+html.dark #detail-subtasks-progress-text {
+  color: #cbd5e1 !important;
+}
+
+/* Pastillas de estado y prioridad en modal detalle */
+html.dark #detail-status-pill.bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+html.dark #detail-status-pill.bg-sky-100 {
+  background-color: rgba(14, 165, 233, 0.2) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(14, 165, 233, 0.4) !important;
+}
+html.dark #detail-status-pill.bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+}
+html.dark #detail-priority-pill.bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.2) !important;
+  color: #fb7185 !important;
+  border: 1px solid rgba(244, 63, 94, 0.4) !important;
+}
+html.dark #detail-priority-pill.bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+html.dark #detail-priority-pill.bg-slate-200 {
+  background-color: #1f2937 !important;
+  color: #94a3b8 !important;
+  border: 1px solid #374151 !important;
+}
+
+/* Inputs, Textareas, Date Pickers en modales */
 html.dark input[type="text"],
 html.dark input[type="password"],
 html.dark input[type="date"],
@@ -360,12 +456,19 @@ html.dark select {
   color: #f8fafc !important;
 }
 
+html.dark #detail-title-input {
+  background-color: transparent !important;
+  border-color: #1f2937 !important;
+  color: #f8fafc !important;
+}
+
 html.dark input[type="text"]::placeholder,
 html.dark input[type="password"]::placeholder,
 html.dark textarea::placeholder {
   color: #64748b !important;
 }
 
+/* Sub-tareas en modal detalle */
 html.dark .subtask-item {
   background-color: #0b0f19 !important;
   border-color: #1f2937 !important;
@@ -376,9 +479,21 @@ html.dark .subtask-item:hover {
   background-color: #111827 !important;
 }
 
+html.dark .subtask-item span {
+  color: #f1f5f9 !important;
+}
+
+html.dark .subtask-completed span {
+  color: #64748b !important;
+  text-decoration: line-through;
+}
+
+/* Botones Secundarios y Cancelar en Modales */
 html.dark #btn-confirm-cancel,
 html.dark #btn-cancel-new-task,
+html.dark #btn-cancel-new-task-modal,
 html.dark #btn-close-task-detail,
+html.dark #btn-close-detail-modal-btn,
 html.dark #btn-cancel-folder,
 html.dark #btn-close-devops-modal-footer {
   background-color: #1f2937 !important;
@@ -388,11 +503,38 @@ html.dark #btn-close-devops-modal-footer {
 
 html.dark #btn-confirm-cancel:hover,
 html.dark #btn-cancel-new-task:hover,
+html.dark #btn-cancel-new-task-modal:hover,
 html.dark #btn-close-task-detail:hover,
+html.dark #btn-close-detail-modal-btn:hover,
 html.dark #btn-cancel-folder:hover,
 html.dark #btn-close-devops-modal-footer:hover {
   background-color: #374151 !important;
   color: #f8fafc !important;
+}
+
+html.dark #btn-delete-task-modal {
+  color: #f43f5e !important;
+}
+
+html.dark #btn-delete-task-modal:hover {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+}
+
+html.dark #btn-close-new-task-modal,
+html.dark #btn-close-detail-modal,
+html.dark #btn-close-auth-modal,
+html.dark #btn-close-folder-modal,
+html.dark #btn-close-devops-modal {
+  color: #94a3b8 !important;
+}
+
+html.dark #btn-close-new-task-modal:hover,
+html.dark #btn-close-detail-modal:hover,
+html.dark #btn-close-auth-modal:hover,
+html.dark #btn-close-folder-modal:hover,
+html.dark #btn-close-devops-modal:hover {
+  color: #f8fafc !important;
+  background-color: #1f2937 !important;
 }
 
 /* Dropdowns en Modo Oscuro */
@@ -415,6 +557,10 @@ html.dark .dropdown-item:hover {
 html.dark .dropdown-trigger {
   background-color: #0b0f19 !important;
   border-color: #1f2937 !important;
+  color: #f8fafc !important;
+}
+
+html.dark .dropdown-trigger .trigger-label {
   color: #f8fafc !important;
 }
 
