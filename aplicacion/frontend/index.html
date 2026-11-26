@@ -1023,10 +1023,10 @@
   <!-- MODAL: PANEL DEVOPS & TELEMETRÍA AWS                       -->
   <!-- ========================================================== -->
   <div id="devops-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-fadeIn my-auto">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-fadeIn my-auto">
       
       <!-- Modal Header -->
-      <div class="bg-slate-900 text-white px-4 sm:px-5 py-3.5 flex justify-between items-center">
+      <div class="bg-slate-900 text-white px-4 sm:px-5 py-3.5 flex justify-between items-center border-b border-slate-800">
         <div class="flex items-center gap-2">
           <div class="p-1.5 bg-amber-500/20 text-amber-400 rounded-lg">
             <i class="fa-brands fa-aws text-base sm:text-lg"></i>
@@ -1036,7 +1036,7 @@
             <p class="text-[10px] sm:text-[11px] text-slate-400">Métricas de contenedor ECS y pipelines</p>
           </div>
         </div>
-        <button id="btn-close-devops-modal" class="text-slate-400 hover:text-white p-1 rounded-lg transition">
+        <button id="btn-close-devops-modal" class="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
@@ -1046,64 +1046,64 @@
         
         <!-- Estado de Conexión & Métricas del Contenedor -->
         <div>
-          <h3 class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+          <h3 class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 mb-2 flex items-center gap-1.5">
             <i class="fa-solid fa-server text-indigo-500"></i> Telemetría de Amazon ECS (Fargate)
           </h3>
           <div class="grid grid-cols-2 gap-2 text-xs">
-            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-              <span class="text-slate-400 block text-[9px] uppercase font-semibold">Estado Backend</span>
-              <span id="modal-status-text" class="font-bold text-emerald-600 mt-0.5 inline-block text-xs">En Línea</span>
+            <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl">
+              <span class="text-slate-400 dark:text-slate-400 block text-[9px] uppercase font-semibold">Estado Backend</span>
+              <span id="modal-status-text" class="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 inline-block text-xs">En Línea</span>
             </div>
-            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-              <span class="text-slate-400 block text-[9px] uppercase font-semibold">Container ID / Host</span>
-              <span id="modal-hostname" class="font-mono font-medium text-slate-700 truncate mt-0.5 block text-xs">-</span>
+            <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl">
+              <span class="text-slate-400 dark:text-slate-400 block text-[9px] uppercase font-semibold">Container ID / Host</span>
+              <span id="modal-hostname" class="font-mono font-medium text-slate-700 dark:text-slate-200 truncate mt-0.5 block text-xs">-</span>
             </div>
-            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-              <span class="text-slate-400 block text-[9px] uppercase font-semibold">Latencia API</span>
-              <span id="modal-latency" class="font-medium text-slate-700 mt-0.5 inline-block text-xs">- ms</span>
+            <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl">
+              <span class="text-slate-400 dark:text-slate-400 block text-[9px] uppercase font-semibold">Latencia API</span>
+              <span id="modal-latency" class="font-medium text-slate-700 dark:text-slate-200 mt-0.5 inline-block text-xs">- ms</span>
             </div>
-            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-              <span class="text-slate-400 block text-[9px] uppercase font-semibold">Uptime Backend</span>
-              <span id="modal-uptime" class="font-medium text-slate-700 mt-0.5 inline-block text-xs">-</span>
+            <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl">
+              <span class="text-slate-400 dark:text-slate-400 block text-[9px] uppercase font-semibold">Uptime Backend</span>
+              <span id="modal-uptime" class="font-medium text-slate-700 dark:text-slate-200 mt-0.5 inline-block text-xs">-</span>
             </div>
           </div>
         </div>
 
         <!-- Resumen de los 3 Pipelines -->
         <div>
-          <h3 class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+          <h3 class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 mb-2 flex items-center gap-1.5">
             <i class="fa-solid fa-diagram-project text-amber-500"></i> Los Tres Pipelines CI/CD
           </h3>
           <div class="space-y-1.5 text-xs">
-            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-start gap-2.5">
-              <span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded font-semibold text-[10px] shrink-0">P1</span>
+            <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl flex items-start gap-2.5">
+              <span class="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40 rounded font-semibold text-[10px] shrink-0">P1</span>
               <div>
-                <p class="font-semibold text-slate-800">Infraestructura (Terraform)</p>
-                <p class="text-[10px] text-slate-500">VPC, Subredes, ECR, Clúster ECS Fargate y ALB.</p>
+                <p class="font-semibold text-slate-800 dark:text-slate-100">Infraestructura (Terraform)</p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400">VPC, Subredes, ECR, Clúster ECS Fargate y ALB.</p>
               </div>
             </div>
 
-            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-start gap-2.5">
-              <span class="px-1.5 py-0.5 bg-sky-100 text-sky-800 rounded font-semibold text-[10px] shrink-0">P2</span>
+            <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl flex items-start gap-2.5">
+              <span class="px-1.5 py-0.5 bg-sky-100 dark:bg-sky-950/70 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/40 rounded font-semibold text-[10px] shrink-0">P2</span>
               <div>
-                <p class="font-semibold text-slate-800">Construcción y Publicación (CI)</p>
-                <p class="text-[10px] text-slate-500">Docker build & push a Amazon ECR.</p>
+                <p class="font-semibold text-slate-800 dark:text-slate-100">Construcción y Publicación (CI)</p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400">Docker build & push a Amazon ECR.</p>
               </div>
             </div>
 
-            <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-start gap-2.5">
-              <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px] shrink-0">P3</span>
+            <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl flex items-start gap-2.5">
+              <span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 rounded font-semibold text-[10px] shrink-0">P3</span>
               <div>
-                <p class="font-semibold text-slate-800">Despliegue Continuo (CD)</p>
-                <p class="text-[10px] text-slate-500">Rolling update automático en ECS Fargate.</p>
+                <p class="font-semibold text-slate-800 dark:text-slate-100">Despliegue Continuo (CD)</p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400">Rolling update automático en ECS Fargate.</p>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Ajuste de Endpoint de API -->
-        <div class="pt-2 border-t border-slate-100">
-          <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+          <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
             Endpoint API Backend:
           </label>
           <div class="flex gap-1.5">
@@ -1111,11 +1111,11 @@
               id="api-url-input" 
               type="text" 
               placeholder="Ejemplo: /api o http://localhost:5000" 
-              class="flex-1 min-w-0 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="flex-1 min-w-0 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
             <button 
               id="btn-save-api" 
-              class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition shrink-0"
+              class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-lg text-xs font-medium transition shrink-0 cursor-pointer"
             >
               Guardar
             </button>
@@ -1125,11 +1125,11 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="bg-slate-50 px-4 py-2.5 border-t border-slate-100 flex justify-between items-center">
-        <button id="btn-refresh-telemetry" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+      <div class="bg-slate-50 dark:bg-slate-900/90 px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+        <button id="btn-refresh-telemetry" class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium flex items-center gap-1 cursor-pointer">
           <i class="fa-solid fa-rotate text-xs"></i> Actualizar Métricas
         </button>
-        <button id="btn-close-devops-modal-footer" class="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs rounded-lg transition">
+        <button id="btn-close-devops-modal-footer" class="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium text-xs rounded-lg transition cursor-pointer">
           Cerrar
         </button>
       </div>

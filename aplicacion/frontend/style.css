@@ -371,6 +371,7 @@ html.dark #modal-task-detail > div,
 html.dark #modal-new-folder > div,
 html.dark #modal-auth > div,
 html.dark #modal-devops > div,
+html.dark #devops-modal > div,
 html.dark #modal-confirm > div {
   background-color: #111827 !important;
   border-color: #1f2937 !important;
@@ -383,16 +384,20 @@ html.dark #modal-task-detail .border-b,
 html.dark #modal-new-folder .border-b,
 html.dark #modal-auth .border-b,
 html.dark #modal-devops .border-b,
+html.dark #devops-modal .border-b,
 html.dark #modal-new-task .border-t,
 html.dark #modal-task-detail .border-t,
 html.dark #modal-new-folder .border-t,
 html.dark #modal-auth .border-t,
 html.dark #modal-devops .border-t,
+html.dark #devops-modal .border-t,
 html.dark #modal-confirm .border-t,
 html.dark #modal-new-task .bg-slate-50\/60,
 html.dark #modal-task-detail .bg-slate-50\/70,
 html.dark #modal-auth .bg-slate-50\/60,
-html.dark #modal-devops .bg-slate-50 {
+html.dark #modal-devops .bg-slate-50,
+html.dark #devops-modal .bg-slate-50,
+html.dark #devops-modal .bg-slate-50\/90 {
   border-color: #1f2937 !important;
   background-color: #111827 !important;
 }
@@ -413,6 +418,7 @@ html.dark #modal-task-detail h3,
 html.dark #modal-new-folder h3,
 html.dark #modal-auth h2,
 html.dark #modal-devops h3,
+html.dark #devops-modal h3,
 html.dark #modal-confirm h3 {
   color: #f8fafc !important;
 }
@@ -421,7 +427,8 @@ html.dark #modal-new-task label,
 html.dark #modal-task-detail label,
 html.dark #modal-new-folder label,
 html.dark #modal-auth label,
-html.dark #modal-devops label {
+html.dark #modal-devops label,
+html.dark #devops-modal label {
   color: #cbd5e1 !important;
 }
 
@@ -640,4 +647,68 @@ html.dark #modal-auth .shadow-indigo-100,
 html.dark #modal-auth .shadow-md,
 html.dark #modal-auth .bg-gradient-to-tr {
   box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3) !important;
+}
+
+/* ========================================================== */
+/* MODAL DEVOPS & TELEMETRÍA EN MODO OSCURO                   */
+/* ========================================================== */
+html.dark #devops-modal > div,
+html.dark #modal-devops > div {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+}
+
+html.dark #devops-modal .bg-slate-50,
+html.dark #modal-devops .bg-slate-50 {
+  background-color: #0b0f19 !important;
+  border-color: #1f2937 !important;
+}
+
+html.dark #devops-modal p.font-semibold,
+html.dark #modal-devops p.font-semibold,
+html.dark #devops-modal .text-slate-800,
+html.dark #modal-devops .text-slate-800,
+html.dark #devops-modal #modal-hostname,
+html.dark #devops-modal #modal-latency,
+html.dark #devops-modal #modal-uptime {
+  color: #f8fafc !important;
+}
+
+html.dark #devops-modal p.text-slate-500,
+html.dark #modal-devops p.text-slate-500,
+html.dark #devops-modal .text-slate-600,
+html.dark #modal-devops .text-slate-600 {
+  color: #94a3b8 !important;
+}
+
+html.dark #devops-modal .bg-amber-100,
+html.dark #modal-devops .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+  color: #fcd34d !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+
+html.dark #devops-modal .bg-sky-100,
+html.dark #modal-devops .bg-sky-100 {
+  background-color: rgba(14, 165, 233, 0.2) !important;
+  color: #7dd3fc !important;
+  border: 1px solid rgba(14, 165, 233, 0.4) !important;
+}
+
+html.dark #devops-modal .bg-emerald-100,
+html.dark #modal-devops .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #6ee7b7 !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+}
+
+html.dark #devops-modal #btn-save-api,
+html.dark #modal-devops #btn-save-api {
+  background-color: #4f46e5 !important;
+  color: #ffffff !important;
+}
+
+html.dark #devops-modal #btn-save-api:hover,
+html.dark #modal-devops #btn-save-api:hover {
+  background-color: #4338ca !important;
 }
