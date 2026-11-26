@@ -1239,6 +1239,7 @@ function initAuth() {
   if (!currentUser) {
     openAuthModal('login');
   } else {
+    closeAuthModal();
     fetchFolders().then(() => {
       fetchTasks();
     });
