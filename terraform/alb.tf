@@ -14,11 +14,12 @@ resource "aws_lb" "main" {
 # Target Group para Frontend (Nginx en puerto 80)
 # Requiere target_type = "ip" debido a que ECS Fargate opera en red "awsvpc"
 resource "aws_lb_target_group" "frontend" {
-  name        = "${var.project_name}-tg-frontend"
-  port        = var.frontend_container_port
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
-  target_type = "ip"
+  name                 = "${var.project_name}-tg-frontend"
+  port                 = var.frontend_container_port
+  protocol             = "HTTP"
+  vpc_id               = aws_vpc.main.id
+  target_type          = "ip"
+  deregistration_delay = 5
 
   health_check {
     path                = "/health"
@@ -38,11 +39,12 @@ resource "aws_lb_target_group" "frontend" {
 
 # Target Group para Backend (NodeJS en puerto 5000)
 resource "aws_lb_target_group" "backend" {
-  name        = "${var.project_name}-tg-backend"
-  port        = var.backend_container_port
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
-  target_type = "ip"
+  name                 = "${var.project_name}-tg-backend"
+  port                 = var.backend_container_port
+  protocol             = "HTTP"
+  vpc_id               = aws_vpc.main.id
+  target_type          = "ip"
+  deregistration_delay = 5
 
   health_check {
     path                = "/health"

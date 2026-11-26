@@ -25,6 +25,7 @@ permissions:
 env:
   AWS_REGION: "us-east-2"
   TF_WORKING_DIR: "terraform"
+  PROJECT_NAME: "todo-list-devops"
 
 jobs:
   terraform:
@@ -70,6 +71,68 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform validate -no-color
 
+      - name: "7b. Sincronizar Recursos Huérfanos de AWS"
+        if: ${{ github.event_name == 'push' || github.event.inputs.action == 'apply' }}
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          echo "Verificando si existen recursos huérfanos fuera del estado de Terraform..."
+
+          in_state() {
+            terraform state list "$1" >/dev/null 2>&1
+          }
+
+          # 1. Target Groups (si existen fuera del estado, se eliminan para recrearlos en la VPC actual)
+          for tg in "${{ env.PROJECT_NAME }}-tg-frontend" "${{ env.PROJECT_NAME }}-tg-backend"; do
+            res_tg=$([ "$tg" = "${{ env.PROJECT_NAME }}-tg-frontend" ] && echo frontend || echo backend)
+            if ! in_state "aws_lb_target_group.$res_tg"; then
+              TG_ARN=$(aws elbv2 describe-target-groups --names "$tg" --query "TargetGroups[0].TargetGroupArn" --output text 2>/dev/null || true)
+              if [ -n "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
+                echo "Eliminando Target Group huérfano fuera de estado: $tg"
+                aws elbv2 delete-target-group --target-group-arn "$TG_ARN" || true
+              fi
+            fi
+          done
+
+          # 2. Repositorios ECR (si existen fuera del estado, los importamos)
+          for repo in "${{ env.PROJECT_NAME }}-backend" "${{ env.PROJECT_NAME }}-frontend"; do
+            res_repo=$([ "$repo" = "${{ env.PROJECT_NAME }}-backend" ] && echo backend || echo frontend)
+            if ! in_state "aws_ecr_repository.$res_repo"; then
+              if aws ecr describe-repositories --repository-names "$repo" >/dev/null 2>&1; then
+                echo "Importando repositorio ECR existente al estado: $repo"
+                terraform import "aws_ecr_repository.$res_repo" "$repo" || true
+              fi
+            fi
+          done
+
+          # 3. Grupos de Logs de CloudWatch (si existen fuera del estado, los importamos)
+          for lg in "/ecs/${{ env.PROJECT_NAME }}-backend" "/ecs/${{ env.PROJECT_NAME }}-frontend"; do
+            res_lg=$([ "$lg" = "/ecs/${{ env.PROJECT_NAME }}-backend" ] && echo backend || echo frontend)
+            if ! in_state "aws_cloudwatch_log_group.$res_lg"; then
+              if aws logs describe-log-groups --log-group-name-prefix "$lg" --query "logGroups[?logGroupName=='$lg'].logGroupName" --output text 2>/dev/null | grep -q "$lg"; then
+                echo "Importando grupo de logs existente: $lg"
+                terraform import "aws_cloudwatch_log_group.$res_lg" "$lg" || true
+              fi
+            fi
+          done
+
+          # 4. Roles IAM (si existen fuera del estado, los importamos)
+          if ! in_state "aws_iam_role.ecs_execution[0]"; then
+            if aws iam get-role --role-name "${{ env.PROJECT_NAME }}-ecs-execution-role" >/dev/null 2>&1; then
+              echo "Importando rol IAM existente: ${{ env.PROJECT_NAME }}-ecs-execution-role"
+              terraform import 'aws_iam_role.ecs_execution[0]' "${{ env.PROJECT_NAME }}-ecs-execution-role" || true
+              terraform import 'aws_iam_role_policy_attachment.ecs_execution_standard[0]' "${{ env.PROJECT_NAME }}-ecs-execution-role/arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy" || true
+            fi
+          fi
+
+          if ! in_state "aws_iam_role.ecs_task[0]"; then
+            if aws iam get-role --role-name "${{ env.PROJECT_NAME }}-ecs-task-role" >/dev/null 2>&1; then
+              echo "Importando rol IAM existente: ${{ env.PROJECT_NAME }}-ecs-task-role"
+              terraform import 'aws_iam_role.ecs_task[0]' "${{ env.PROJECT_NAME }}-ecs-task-role" || true
+            fi
+          fi
+
+          echo "Sincronización de recursos completada."
+
       - name: "8. Generar Plan de Creación (plan)"
         if: ${{ github.event_name == 'push' || github.event.inputs.action == 'apply' || github.event.inputs.action == 'plan' }}
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -83,7 +146,18 @@ jobs:
       - name: "10. Destruir Infraestructura (destroy)"
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' }}
         working-directory: ${{ env.TF_WORKING_DIR }}
-        run: terraform destroy -no-color -auto-approve
+        run: |
+          echo "Drenando y deteniendo tareas ECS para liberar ENIs rápidamente..."
+          aws ecs update-service --cluster ${{ env.PROJECT_NAME }}-cluster --service ${{ env.PROJECT_NAME }}-backend-service --desired-count 0 2>/dev/null || true
+          aws ecs update-service --cluster ${{ env.PROJECT_NAME }}-cluster --service ${{ env.PROJECT_NAME }}-frontend-service --desired-count 0 2>/dev/null || true
+          
+          TASKS=$(aws ecs list-tasks --cluster ${{ env.PROJECT_NAME }}-cluster --query "taskArns[]" --output text 2>/dev/null || true)
+          for task in $TASKS; do
+            [ "$task" != "None" ] && aws ecs stop-task --cluster ${{ env.PROJECT_NAME }}-cluster --task "$task" --reason "Destroying Infra" 2>/dev/null || true
+          done
+
+          echo "Ejecutando terraform destroy..."
+          terraform destroy -no-color -auto-approve
 
       - name: "11. Guardar Estado de Terraform (Cache de GitHub)"
         if: always()
