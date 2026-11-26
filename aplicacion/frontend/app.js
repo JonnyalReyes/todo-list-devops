@@ -364,6 +364,13 @@ function setupDropdown(containerId, onSelectCallback) {
       }
     }
 
+    // Actualizar icono FontAwesome si tiene indicador de icono
+    const itemIcon = item.querySelector('i');
+    const triggerIcon = container.querySelector('.folder-icon-indicator');
+    if (itemIcon && triggerIcon) {
+      triggerIcon.className = itemIcon.className + ' folder-icon-indicator w-4 text-center shrink-0';
+    }
+
     menu.classList.add('hidden');
     if (typeof onSelectCallback === 'function') {
       onSelectCallback(value, itemText);
@@ -377,10 +384,15 @@ function adjustDropdownPosition(menu, trigger) {
   // Restaurar estilos inline para medir su tamaño y posición natural
   menu.style.left = '';
   menu.style.right = '';
+  menu.style.top = '';
+  menu.style.bottom = '';
+  menu.style.marginTop = '';
+  menu.style.marginBottom = '';
   menu.style.transform = '';
 
   let menuRect = menu.getBoundingClientRect();
   const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
 
   // 1. Si se sale o corta por el borde izquierdo (< 8px)
   if (menuRect.left < 8) {
@@ -406,6 +418,18 @@ function adjustDropdownPosition(menu, trigger) {
     if (menuRect.left < 8) {
       menu.style.left = '0px';
       menu.style.transform = `translateX(${8 - menuRect.left}px)`;
+    }
+  }
+
+  // 3. Si se sale por abajo de la pantalla, abrir hacia arriba si hay espacio
+  menuRect = menu.getBoundingClientRect();
+  if (menuRect.bottom > viewportHeight - 8 && trigger) {
+    const triggerRect = trigger.getBoundingClientRect();
+    if (triggerRect.top > menuRect.height + 8) {
+      menu.style.top = 'auto';
+      menu.style.bottom = '100%';
+      menu.style.marginBottom = '4px';
+      menu.style.marginTop = '0px';
     }
   }
 }
@@ -444,6 +468,12 @@ function setDropdownValue(containerId, value) {
         triggerDot.className = itemDot.className;
       }
     }
+
+    const itemIcon = matchingItem.querySelector('i');
+    const triggerIcon = container.querySelector('.folder-icon-indicator');
+    if (itemIcon && triggerIcon) {
+      triggerIcon.className = itemIcon.className + ' folder-icon-indicator w-4 text-center shrink-0';
+    }
   }
 }
 
@@ -476,6 +506,9 @@ setupDropdown('dropdown-detail-priority', (val) => {
 });
 
 setupDropdown('dropdown-detail-folder');
+
+// Inicializar dropdown de Modal Crear Carpeta
+setupDropdown('dropdown-folder-icon');
 
 // ==========================================================
 // CONTROL DEL SIDEBAR EN MÓVIL
@@ -748,11 +781,15 @@ btnDeleteTaskModal.addEventListener('click', async () => {
 function openFolderModal() {
   modalNewFolder.classList.remove('hidden');
   folderNameInput.value = '';
+  setDropdownValue('dropdown-folder-icon', 'fa-folder');
+  const triggerIcon = document.querySelector('#dropdown-folder-icon .folder-icon-indicator');
+  if (triggerIcon) triggerIcon.style.color = selectedFolderColor || '#4f46e5';
   folderNameInput.focus();
 }
 
 function closeFolderModal() {
   modalNewFolder.classList.add('hidden');
+  document.querySelectorAll('#dropdown-folder-icon .dropdown-menu').forEach(m => m.classList.add('hidden'));
 }
 
 btnOpenNewFolder.addEventListener('click', openFolderModal);
@@ -764,9 +801,11 @@ modalNewFolder.addEventListener('click', (e) => {
 
 colorChoices.forEach(choice => {
   choice.addEventListener('click', () => {
-    colorChoices.forEach(c => c.classList.remove('selected'));
-    choice.classList.add('selected');
+    colorChoices.forEach(c => c.classList.remove('selected', 'ring-2', 'ring-offset-2', 'ring-indigo-400'));
+    choice.classList.add('selected', 'ring-2', 'ring-offset-2', 'ring-indigo-400');
     selectedFolderColor = choice.dataset.color;
+    const triggerIcon = document.querySelector('#dropdown-folder-icon .folder-icon-indicator');
+    if (triggerIcon) triggerIcon.style.color = selectedFolderColor;
   });
 });
 
@@ -775,7 +814,8 @@ createFolderForm.addEventListener('submit', async (e) => {
   const name = folderNameInput.value.trim();
   if (!name) return;
 
-  const icon = folderIconSelect.value;
+  const iconInput = document.getElementById('folder-icon-select');
+  const icon = iconInput ? iconInput.value : 'fa-folder';
   const color = selectedFolderColor;
 
   try {
