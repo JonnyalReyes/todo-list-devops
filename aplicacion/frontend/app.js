@@ -160,11 +160,19 @@ function setupDropdown(containerId, onSelectCallback) {
 
   trigger.addEventListener('click', (e) => {
     e.stopPropagation();
+    const willOpen = menu.classList.contains('hidden');
+
     // Cerrar otros dropdowns abiertos
     document.querySelectorAll('.dropdown-menu').forEach(m => {
       if (m !== menu) m.classList.add('hidden');
     });
-    menu.classList.toggle('hidden');
+
+    if (willOpen) {
+      menu.classList.remove('hidden');
+      adjustDropdownPosition(menu, trigger);
+    } else {
+      menu.classList.add('hidden');
+    }
   });
 
   menu.addEventListener('click', (e) => {
@@ -196,9 +204,54 @@ function setupDropdown(containerId, onSelectCallback) {
   });
 }
 
-// Cerrar todos los dropdowns al hacer clic fuera
+function adjustDropdownPosition(menu, trigger) {
+  if (!menu) return;
+
+  // Restaurar estilos inline para medir su tamaño y posición natural
+  menu.style.left = '';
+  menu.style.right = '';
+  menu.style.transform = '';
+
+  let menuRect = menu.getBoundingClientRect();
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+
+  // 1. Si se sale o corta por el borde izquierdo (< 8px)
+  if (menuRect.left < 8) {
+    menu.style.left = '0px';
+    menu.style.right = 'auto';
+    menuRect = menu.getBoundingClientRect();
+    if (menuRect.left < 8) {
+      menu.style.transform = `translateX(${8 - menuRect.left}px)`;
+    }
+  }
+
+  // 2. Si se sale o corta por el borde derecho (> viewport - 8px)
+  menuRect = menu.getBoundingClientRect();
+  if (menuRect.right > viewportWidth - 8) {
+    menu.style.right = '0px';
+    menu.style.left = 'auto';
+    menuRect = menu.getBoundingClientRect();
+    if (menuRect.right > viewportWidth - 8) {
+      menu.style.transform = `translateX(${viewportWidth - 8 - menuRect.right}px)`;
+    }
+    // Asegurar que no se corte por la izquierda al corregir hacia la izquierda
+    menuRect = menu.getBoundingClientRect();
+    if (menuRect.left < 8) {
+      menu.style.left = '0px';
+      menu.style.transform = `translateX(${8 - menuRect.left}px)`;
+    }
+  }
+}
+
+// Cerrar todos los dropdowns al hacer clic fuera o redimensionar pantalla
 document.addEventListener('click', () => {
   document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+});
+
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.dropdown-menu:not(.hidden)').forEach(menu => {
+    menu.classList.add('hidden');
+  });
 });
 
 // Inicializar dropdowns fijos (Estado y Prioridad)
