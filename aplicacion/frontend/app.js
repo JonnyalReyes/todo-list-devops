@@ -20,6 +20,22 @@ let activePriorityFilter = 'all'; // 'all', 'alta', 'media', 'baja'
 let currentUser = null; // { id, username, role, isAdmin, token }
 let authMode = 'login'; // 'login' o 'register'
 
+// Headers de autenticación para aislar notas por usuario
+function getAuthHeaders(includeContentType = true) {
+  const headers = {};
+  if (includeContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
+  if (currentUser) {
+    headers['x-user-name'] = currentUser.username;
+    headers['x-user-id'] = currentUser.id;
+    if (currentUser.token) {
+      headers['Authorization'] = `Bearer ${currentUser.token}`;
+    }
+  }
+  return headers;
+}
+
 // Tarea activa en el modal de edición detallada
 let activeEditingTask = null;
 
@@ -115,8 +131,6 @@ const authUsernameInput = document.getElementById('auth-username-input');
 const authPasswordInput = document.getElementById('auth-password-input');
 const btnAuthSubmitLabel = document.getElementById('btn-auth-submit-label');
 const btnTogglePasswordVisibility = document.getElementById('btn-toggle-password-visibility');
-const quickAdminBox = document.getElementById('quick-admin-box');
-const btnFillAdmin = document.getElementById('btn-fill-admin');
 
 // Topbar User Elements
 const topbarLoggedInView = document.getElementById('topbar-logged-in-view');
@@ -541,7 +555,7 @@ btnSaveTaskDetail.addEventListener('click', async () => {
   try {
     const res = await fetch(`${API_BASE_URL}/api/tasks/${activeEditingTask.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(true),
       body: JSON.stringify(updatedPayload)
     });
 
@@ -606,7 +620,7 @@ createFolderForm.addEventListener('submit', async (e) => {
   try {
     const res = await fetch(`${API_BASE_URL}/api/folders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(true),
       body: JSON.stringify({ name, color, icon })
     });
 
@@ -704,8 +718,16 @@ btnSaveApi.addEventListener('click', () => {
 // CARPETAS
 // ==========================================================
 async function fetchFolders() {
+  if (!currentUser) {
+    allFolders = [];
+    renderFoldersList();
+    return;
+  }
   try {
-    const res = await fetch(`${API_BASE_URL}/api/folders`, { cache: 'no-store' });
+    const res = await fetch(`${API_BASE_URL}/api/folders`, {
+      cache: 'no-store',
+      headers: getAuthHeaders(false)
+    });
     if (!res.ok) throw new Error('Error al obtener carpetas');
     const result = await res.json();
     allFolders = result.data || [];
@@ -803,7 +825,10 @@ window.deleteFolder = async function(id, name) {
   if (!confirm(`¿Eliminar la carpeta "${name}"? Las tareas asociadas se conservarán.`)) return;
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/folders/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE_URL}/api/folders/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(false)
+    });
     if (!res.ok) throw new Error('Error al eliminar');
 
     if (activeFolderId === id) {
@@ -880,8 +905,17 @@ searchInput.addEventListener('input', (e) => {
 // TAREAS / NOTAS
 // ==========================================================
 async function fetchTasks() {
+  if (!currentUser) {
+    allTasks = [];
+    updateBadges();
+    renderTasks();
+    return;
+  }
   try {
-    const res = await fetch(`${API_BASE_URL}/api/tasks`, { cache: 'no-store' });
+    const res = await fetch(`${API_BASE_URL}/api/tasks`, {
+      cache: 'no-store',
+      headers: getAuthHeaders(false)
+    });
     if (!res.ok) throw new Error('Error al cargar tareas');
     const result = await res.json();
     allTasks = result.data || [];
@@ -1099,7 +1133,7 @@ createTaskForm.addEventListener('submit', async (e) => {
   try {
     const res = await fetch(`${API_BASE_URL}/api/tasks`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(true),
       body: JSON.stringify({ title, description, folderId, status, priority, dueDate, subtasks: [] })
     });
 
@@ -1135,7 +1169,7 @@ window.toggleTaskQuick = async function(id, isChecked) {
   try {
     await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(true),
       body: JSON.stringify({ status: newStatus, done: isChecked })
     });
     fetchFolders();
@@ -1150,7 +1184,10 @@ window.deleteTask = async function(id) {
   updateBadges();
 
   try {
-    await fetch(`${API_BASE_URL}/api/tasks/${id}`, { method: 'DELETE' });
+    await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(false)
+    });
     fetchFolders();
   } catch (err) {
     fetchTasks();
@@ -1173,9 +1210,13 @@ function initAuth() {
 
   updateAuthUI();
 
-  // Si no hay sesión previa, abrimos el modal de login de forma amigable
+  // Si no hay sesión previa, abrimos la pantalla completa de login bloqueando el fondo
   if (!currentUser) {
     openAuthModal('login');
+  } else {
+    fetchFolders().then(() => {
+      fetchTasks();
+    });
   }
 }
 
@@ -1238,10 +1279,18 @@ function openAuthModal(mode = 'login') {
   authPasswordInput.value = '';
   hideAuthError();
   modalAuth.classList.remove('hidden');
+  if (btnCloseAuthModal) {
+    if (currentUser) {
+      btnCloseAuthModal.classList.remove('hidden');
+    } else {
+      btnCloseAuthModal.classList.add('hidden');
+    }
+  }
   setTimeout(() => authUsernameInput.focus(), 80);
 }
 
 function closeAuthModal() {
+  if (!currentUser) return; // Obligatorio iniciar sesión para ingresar a las notas
   modalAuth.classList.add('hidden');
 }
 
@@ -1253,16 +1302,14 @@ function switchAuthMode(mode) {
     tabLogin.className = 'flex-1 py-1.5 rounded-lg bg-white text-indigo-600 shadow-xs transition font-semibold';
     tabRegister.className = 'flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition font-medium';
     authModalTitle.textContent = 'Iniciar Sesión';
-    authModalSubtitle.textContent = 'Accede a tus tareas y configuraciones';
+    authModalSubtitle.textContent = 'Accede a tus tareas y notas personales';
     btnAuthSubmitLabel.textContent = 'Entrar al Sistema';
-    quickAdminBox.classList.remove('hidden');
   } else {
     tabRegister.className = 'flex-1 py-1.5 rounded-lg bg-white text-indigo-600 shadow-xs transition font-semibold';
     tabLogin.className = 'flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition font-medium';
     authModalTitle.textContent = 'Crear Nueva Cuenta';
     authModalSubtitle.textContent = 'Regístrate para gestionar tus notas y tareas';
     btnAuthSubmitLabel.textContent = 'Crear Cuenta';
-    quickAdminBox.classList.add('hidden');
   }
 }
 
@@ -1277,20 +1324,15 @@ function hideAuthError() {
 }
 
 btnOpenLogin.addEventListener('click', () => openAuthModal('login'));
-btnCloseAuthModal.addEventListener('click', closeAuthModal);
+if (btnCloseAuthModal) {
+  btnCloseAuthModal.addEventListener('click', closeAuthModal);
+}
 modalAuth.addEventListener('click', (e) => {
-  if (e.target === modalAuth) closeAuthModal();
+  if (e.target === modalAuth && currentUser) closeAuthModal();
 });
 
 tabLogin.addEventListener('click', () => switchAuthMode('login'));
 tabRegister.addEventListener('click', () => switchAuthMode('register'));
-
-btnFillAdmin.addEventListener('click', () => {
-  authUsernameInput.value = 'admin';
-  authPasswordInput.value = '12345678';
-  hideAuthError();
-  authPasswordInput.focus();
-});
 
 btnTogglePasswordVisibility.addEventListener('click', () => {
   const isPass = authPasswordInput.type === 'password';
@@ -1335,6 +1377,8 @@ authForm.addEventListener('submit', async (e) => {
     localStorage.setItem('TASKFLOW_USER', JSON.stringify(currentUser));
     updateAuthUI();
     closeAuthModal();
+    await fetchFolders();
+    await fetchTasks();
   } catch (err) {
     showAuthError('No se pudo conectar con el backend. Verifica que el servidor esté activo.');
   }
@@ -1344,6 +1388,11 @@ function handleLogout() {
   if (confirm(`¿Cerrar la sesión de "${currentUser ? currentUser.username : 'usuario'}"?`)) {
     localStorage.removeItem('TASKFLOW_USER');
     currentUser = null;
+    allTasks = [];
+    allFolders = [];
+    renderFoldersList();
+    renderTasks();
+    updateBadges();
     updateAuthUI();
     openAuthModal('login');
   }
@@ -1364,8 +1413,5 @@ btnSidebarAuth.addEventListener('click', () => {
 apiUrlInput.value = API_BASE_URL;
 initAuth();
 fetchTelemetry();
-fetchFolders().then(() => {
-  fetchTasks();
-});
 
 setInterval(fetchTelemetry, 25000);
