@@ -55,18 +55,21 @@ const badgeInProgressCount = document.getElementById('badge-in-progress-count');
 const badgeCompletedCount = document.getElementById('badge-completed-count');
 const badgeHighCount = document.getElementById('badge-high-count');
 
-// DOM Elements - Formulario Rápido de Tarea
-const createTaskForm = document.getElementById('create-task-form');
-const taskTitleInput = document.getElementById('task-title-input');
-const taskFolderSelect = document.getElementById('task-folder-select');
-const taskStatusSelect = document.getElementById('task-status-select');
-const taskPrioritySelect = document.getElementById('task-priority-select');
-const taskDueDateInput = document.getElementById('task-due-date-input');
-const taskDescInput = document.getElementById('task-desc-input');
-const btnToggleDescription = document.getElementById('btn-toggle-description');
-const descriptionFieldContainer = document.getElementById('description-field-container');
-const descToggleText = document.getElementById('desc-toggle-text');
+// DOM Elements - Modal Nueva Tarea
+const modalNewTask = document.getElementById('modal-new-task');
+const btnCloseNewTaskModal = document.getElementById('btn-close-new-task-modal');
+const btnCancelNewTaskModal = document.getElementById('btn-cancel-new-task-modal');
 const btnQuickNewTask = document.getElementById('btn-quick-new-task');
+const btnHeaderNewTask = document.getElementById('btn-header-new-task');
+const btnFabNewTask = document.getElementById('btn-fab-new-task');
+const newTaskForm = document.getElementById('new-task-form');
+const newTaskTitleInput = document.getElementById('new-task-title-input');
+const newTaskFolderSelect = document.getElementById('new-task-folder-select');
+const newTaskStatusSelect = document.getElementById('new-task-status-select');
+const newTaskPrioritySelect = document.getElementById('new-task-priority-select');
+const newTaskDueDateInput = document.getElementById('new-task-due-date-input');
+const newTaskDescInput = document.getElementById('new-task-desc-input');
+const btnSubmitNewTask = document.getElementById('btn-submit-new-task');
 
 // DOM Elements - Modal Detalle & Edición de Tarea (Mini Tareas)
 const modalTaskDetail = document.getElementById('modal-task-detail');
@@ -250,21 +253,52 @@ window.addEventListener('resize', () => {
   });
 });
 
-// Inicializar dropdowns fijos (Estado y Prioridad)
-setupDropdown('dropdown-task-status', (val) => {
-  const dot = document.querySelector('#dropdown-task-status .status-dot');
+// Helper para asignar valor programáticamente a cualquier dropdown moderno
+function setDropdownValue(containerId, value) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const hiddenInput = container.querySelector('input[type="hidden"]');
+  const label = container.querySelector('.trigger-label');
+  const matchingItem = container.querySelector(`.dropdown-item[data-value="${value}"]`);
+
+  if (hiddenInput) hiddenInput.value = value;
+  if (matchingItem && label) {
+    const itemText = matchingItem.querySelector('span:last-child') ? matchingItem.querySelector('span:last-child').textContent : matchingItem.textContent.trim();
+    label.textContent = itemText;
+
+    const itemDot = matchingItem.querySelector('.status-dot, .folder-dot, .priority-dot, span[style*="background-color"]');
+    const triggerDot = container.querySelector('.status-dot, .folder-dot, .priority-dot');
+    if (itemDot && triggerDot) {
+      if (itemDot.style.backgroundColor) {
+        triggerDot.style.backgroundColor = itemDot.style.backgroundColor;
+      } else {
+        triggerDot.className = itemDot.className;
+      }
+    }
+  }
+}
+
+// Inicializar dropdowns de Modal Nueva Tarea
+setupDropdown('dropdown-new-task-status', (val) => {
+  const dot = document.querySelector('#dropdown-new-task-status .status-dot');
+  if (!dot) return;
   if (val === 'pendiente') dot.className = 'w-2 h-2 rounded-full bg-amber-400 status-dot';
   if (val === 'en_curso') dot.className = 'w-2 h-2 rounded-full bg-sky-500 status-dot';
   if (val === 'completado') dot.className = 'w-2 h-2 rounded-full bg-emerald-500 status-dot';
 });
 
-setupDropdown('dropdown-task-priority', (val) => {
-  const icon = document.querySelector('#dropdown-task-priority .priority-icon');
-  if (val === 'alta') icon.className = 'fa-solid fa-fire text-rose-500 text-xs priority-icon';
-  if (val === 'media') icon.className = 'fa-solid fa-flag text-amber-500 text-xs priority-icon';
-  if (val === 'baja') icon.className = 'fa-solid fa-flag text-slate-400 text-xs priority-icon';
+setupDropdown('dropdown-new-task-priority', (val) => {
+  const dot = document.querySelector('#dropdown-new-task-priority .priority-dot');
+  if (!dot) return;
+  if (val === 'alta') dot.className = 'w-2 h-2 rounded-full bg-rose-500 priority-dot';
+  if (val === 'media') dot.className = 'w-2 h-2 rounded-full bg-amber-400 priority-dot';
+  if (val === 'baja') dot.className = 'w-2 h-2 rounded-full bg-slate-400 priority-dot';
 });
 
+setupDropdown('dropdown-new-task-folder');
+
+// Inicializar dropdowns de Modal Detalle de Tarea
 setupDropdown('dropdown-detail-status', (val) => {
   updateDetailBadges();
 });
@@ -273,7 +307,6 @@ setupDropdown('dropdown-detail-priority', (val) => {
   updateDetailBadges();
 });
 
-setupDropdown('dropdown-task-folder');
 setupDropdown('dropdown-detail-folder');
 
 // ==========================================================
@@ -292,25 +325,6 @@ function closeSidebar() {
 btnToggleSidebar.addEventListener('click', openSidebar);
 btnCloseSidebar.addEventListener('click', closeSidebar);
 sidebarOverlay.addEventListener('click', closeSidebar);
-
-// Expandir / Ocultar descripción en creación rápida
-let descExpanded = false;
-btnToggleDescription.addEventListener('click', () => {
-  descExpanded = !descExpanded;
-  if (descExpanded) {
-    descriptionFieldContainer.classList.remove('hidden');
-    descToggleText.textContent = '- Ocultar nota / detalle';
-    taskDescInput.focus();
-  } else {
-    descriptionFieldContainer.classList.add('hidden');
-    descToggleText.textContent = '+ Agregar nota / detalle';
-  }
-});
-
-btnQuickNewTask.addEventListener('click', () => {
-  taskTitleInput.focus();
-  taskTitleInput.scrollIntoView({ behavior: 'smooth' });
-});
 
 // ==========================================================
 // MODAL DETALLE / EDICIÓN COMPLETA DE TAREA (MINI TAREAS)
@@ -744,7 +758,7 @@ function renderFoldersList() {
 
 // Llenar los menús dropdowns modernos de carpeta
 function renderFolderDropdowns() {
-  const taskFolderContainer = document.querySelector('#dropdown-task-folder .dropdown-items-container');
+  const newTaskFolderContainer = document.querySelector('#dropdown-new-task-folder .dropdown-items-container');
   const detailFolderContainer = document.querySelector('#dropdown-detail-folder .dropdown-items-container');
 
   if (allFolders.length === 0) return;
@@ -756,15 +770,8 @@ function renderFolderDropdowns() {
     </div>
   `).join('');
 
-  if (taskFolderContainer) taskFolderContainer.innerHTML = html;
+  if (newTaskFolderContainer) newTaskFolderContainer.innerHTML = html;
   if (detailFolderContainer) detailFolderContainer.innerHTML = html;
-
-  // Si no hay carpeta seleccionada en el formulario rápido, seleccionar la primera
-  if (!taskFolderSelect.value && allFolders[0]) {
-    taskFolderSelect.value = allFolders[0].id;
-    const label = document.querySelector('#dropdown-task-folder .trigger-label');
-    if (label) label.textContent = allFolders[0].name;
-  }
 }
 
 window.selectFolder = function(folderId) {
@@ -781,12 +788,7 @@ window.selectFolder = function(folderId) {
       <span>${escapeHtml(folder.name)}</span>
     `;
     currentViewSubtitle.textContent = `Tareas clasificadas en la carpeta ${folder.name}`;
-    filterDisplayLabel.textContent = `Carpeta: ${folder.name}`;
-
-    // Actualizar selector rápido a esta carpeta
-    taskFolderSelect.value = folder.id;
-    const taskFolderLabel = document.querySelector('#dropdown-task-folder .trigger-label');
-    if (taskFolderLabel) taskFolderLabel.textContent = folder.name;
+    if (filterDisplayLabel) filterDisplayLabel.textContent = `Carpeta: ${folder.name}`;
   }
 
   closeSidebar();
@@ -940,10 +942,21 @@ function renderTasks() {
   if (filtered.length === 0) {
     const isFiltered = currentView !== 'all' || searchTerm;
     tasksContainer.innerHTML = `
-      <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 space-y-2">
-        <i class="fa-regular fa-folder-open text-3xl text-slate-300"></i>
-        <p class="text-xs font-semibold text-slate-600">${isFiltered ? 'No hay tareas en esta sección o búsqueda.' : 'No tienes tareas registradas.'}</p>
-        <p class="text-[11px] text-slate-400">${isFiltered ? 'Selecciona otra vista en el menú lateral o crea una nueva tarea arriba.' : 'Agrega tu primera tarea arriba para comenzar.'}</p>
+      <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 space-y-3">
+        <div class="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center text-xl">
+          <i class="fa-regular fa-clipboard"></i>
+        </div>
+        <div class="space-y-1">
+          <p class="text-xs font-bold text-slate-700">${isFiltered ? 'No hay tareas en esta sección o búsqueda.' : 'No tienes tareas registradas todavía.'}</p>
+          <p class="text-[11px] text-slate-400">${isFiltered ? 'Puedes cambiar de vista en el menú lateral o agregar una nueva tarea.' : 'Comienza creando tu primera tarea personal o de trabajo.'}</p>
+        </div>
+        <button 
+          onclick="openNewTaskModal()" 
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition active:scale-95"
+        >
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Crear Nueva Tarea</span>
+        </button>
       </div>
     `;
     return;
@@ -1070,18 +1083,82 @@ function escapeHtml(str) {
 }
 
 // ==========================================================
-// CREAR TAREA RÁPIDA
+// MODAL: CREAR NUEVA TAREA / NOTA
 // ==========================================================
-createTaskForm.addEventListener('submit', async (e) => {
+function openNewTaskModal() {
+  if (!currentUser) {
+    openAuthModal('login');
+    return;
+  }
+
+  // Limpiar formulario previo
+  newTaskTitleInput.value = '';
+  newTaskDescInput.value = '';
+  newTaskDueDateInput.value = '';
+
+  // 1. Asignar Estado por defecto según la pestaña activa (currentView)
+  let defaultStatus = 'pendiente';
+  if (currentView === 'status-pendiente') {
+    defaultStatus = 'pendiente';
+  } else if (currentView === 'status-en_curso') {
+    defaultStatus = 'en_curso';
+  } else if (currentView === 'status-completado') {
+    defaultStatus = 'completado';
+  }
+  setDropdownValue('dropdown-new-task-status', defaultStatus);
+
+  // 2. Asignar Prioridad por defecto según la pestaña activa
+  let defaultPriority = 'media';
+  if (currentView === 'priority-high') {
+    defaultPriority = 'alta';
+  }
+  setDropdownValue('dropdown-new-task-priority', defaultPriority);
+
+  // 3. Asignar Carpeta por defecto según la pestaña activa
+  let defaultFolderId = allFolders[0] ? allFolders[0].id : 'general';
+  if (activeFolderId && allFolders.some(f => f.id === activeFolderId)) {
+    defaultFolderId = activeFolderId;
+  }
+  setDropdownValue('dropdown-new-task-folder', defaultFolderId);
+
+  modalNewTask.classList.remove('hidden');
+  setTimeout(() => newTaskTitleInput.focus(), 80);
+}
+
+window.openNewTaskModal = openNewTaskModal;
+
+function closeNewTaskModal() {
+  modalNewTask.classList.add('hidden');
+}
+
+// Botones para abrir modal
+if (btnQuickNewTask) btnQuickNewTask.addEventListener('click', openNewTaskModal);
+if (btnHeaderNewTask) btnHeaderNewTask.addEventListener('click', openNewTaskModal);
+if (btnFabNewTask) btnFabNewTask.addEventListener('click', openNewTaskModal);
+
+// Botones para cerrar modal
+if (btnCloseNewTaskModal) btnCloseNewTaskModal.addEventListener('click', closeNewTaskModal);
+if (btnCancelNewTaskModal) btnCancelNewTaskModal.addEventListener('click', closeNewTaskModal);
+if (modalNewTask) {
+  modalNewTask.addEventListener('click', (e) => {
+    if (e.target === modalNewTask) closeNewTaskModal();
+  });
+}
+
+// Submit del formulario del modal
+newTaskForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const title = taskTitleInput.value.trim();
+  const title = newTaskTitleInput.value.trim();
   if (!title) return;
 
-  const folderId = taskFolderSelect.value || (allFolders[0] ? allFolders[0].id : 'general');
-  const status = taskStatusSelect.value || 'pendiente';
-  const priority = taskPrioritySelect.value || 'media';
-  const dueDate = taskDueDateInput.value || null;
-  const description = taskDescInput.value.trim();
+  const folderId = newTaskFolderSelect.value || (allFolders[0] ? allFolders[0].id : 'general');
+  const status = newTaskStatusSelect.value || 'pendiente';
+  const priority = newTaskPrioritySelect.value || 'media';
+  const dueDate = newTaskDueDateInput.value || null;
+  const description = newTaskDescInput.value.trim();
+
+  btnSubmitNewTask.disabled = true;
+  btnSubmitNewTask.textContent = 'Guardando...';
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/tasks`, {
@@ -1092,20 +1169,15 @@ createTaskForm.addEventListener('submit', async (e) => {
 
     if (!res.ok) throw new Error('Error al crear tarea');
 
-    taskTitleInput.value = '';
-    taskDescInput.value = '';
-    taskDueDateInput.value = '';
-    if (descExpanded) {
-      descExpanded = false;
-      descriptionFieldContainer.classList.add('hidden');
-      descToggleText.textContent = '+ Agregar nota / detalle';
-    }
-
+    closeNewTaskModal();
     await fetchTasks();
     await fetchFolders();
     fetchTelemetry();
   } catch (err) {
     alert('No se pudo guardar la tarea.');
+  } finally {
+    btnSubmitNewTask.disabled = false;
+    btnSubmitNewTask.innerHTML = '<i class="fa-solid fa-plus text-xs"></i><span>Crear Tarea</span>';
   }
 });
 
