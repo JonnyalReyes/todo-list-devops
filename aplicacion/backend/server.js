@@ -29,6 +29,7 @@ let users = [
   {
     id: 1,
     username: 'admin',
+    fullName: 'Administrador',
     password: '12345678',
     role: 'admin',
     createdAt: new Date().toISOString()
@@ -189,6 +190,7 @@ app.post('/api/auth/login', (req, res) => {
     data: {
       id: user.id,
       username: user.username,
+      fullName: user.fullName || user.username,
       role: user.role,
       isAdmin: user.role === 'admin',
       token
@@ -198,7 +200,7 @@ app.post('/api/auth/login', (req, res) => {
 
 // Registrar nueva cuenta de usuario
 app.post('/api/auth/register', (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, fullName } = req.body;
   if (!username || typeof username !== 'string' || !username.trim()) {
     return res.status(400).json({ success: false, error: 'El nombre de usuario es obligatorio.' });
   }
@@ -207,6 +209,8 @@ app.post('/api/auth/register', (req, res) => {
   if (cleanUser.length < 3) {
     return res.status(400).json({ success: false, error: 'El usuario debe tener al menos 3 caracteres.' });
   }
+
+  const cleanFullName = (fullName && typeof fullName === 'string' && fullName.trim()) ? fullName.trim() : username.trim();
 
   if (!password || typeof password !== 'string' || password.length < 8) {
     return res.status(400).json({ success: false, error: 'La contraseña debe tener mínimo 8 caracteres.' });
@@ -220,6 +224,7 @@ app.post('/api/auth/register', (req, res) => {
   const newUser = {
     id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
     username: username.trim(),
+    fullName: cleanFullName,
     password: String(password),
     role: 'user', // Los nuevos registros siempre tienen rol 'user'
     createdAt: new Date().toISOString()
@@ -238,7 +243,7 @@ app.post('/api/auth/register', (req, res) => {
   // Crear una primera tarea de bienvenida individual para este usuario
   const welcomeTask = {
     id: tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
-    title: `¡Bienvenido(a) a tus notas, ${newUser.username}!`,
+    title: `¡Bienvenido(a) a tus notas, ${newUser.fullName}!`,
     description: 'Este es tu espacio personal y privado de tareas. Nadie más puede ver tus notas ni carpetas.',
     folderId: defaultUserFolders[0].id,
     status: 'pendiente',
@@ -255,7 +260,7 @@ app.post('/api/auth/register', (req, res) => {
   };
   tasks.unshift(welcomeTask);
 
-  console.log(`[USUARIO REGISTRADO] ID: ${newUser.id} - "${newUser.username}" (Rol: ${newUser.role}) con espacio individual creado`);
+  console.log(`[USUARIO REGISTRADO] ID: ${newUser.id} - "${newUser.username}" (${newUser.fullName}) [Rol: ${newUser.role}] con espacio individual creado`);
 
   const token = `token-${newUser.id}-${Date.now().toString(36)}`;
   res.status(201).json({
@@ -263,6 +268,7 @@ app.post('/api/auth/register', (req, res) => {
     data: {
       id: newUser.id,
       username: newUser.username,
+      fullName: newUser.fullName,
       role: newUser.role,
       isAdmin: false,
       token
@@ -279,6 +285,7 @@ app.get('/api/auth/me', (req, res) => {
       data: {
         id: user.id,
         username: user.username,
+        fullName: user.fullName || user.username,
         role: user.role,
         isAdmin: user.role === 'admin'
       }

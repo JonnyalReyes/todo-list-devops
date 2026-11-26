@@ -125,6 +125,8 @@ const authModalTitle = document.getElementById('auth-modal-title');
 const authModalSubtitle = document.getElementById('auth-modal-subtitle');
 const authErrorBox = document.getElementById('auth-error-box');
 const authErrorText = document.getElementById('auth-error-text');
+const authFullNameGroup = document.getElementById('auth-fullname-group');
+const authFullNameInput = document.getElementById('auth-fullname-input');
 const authUsernameInput = document.getElementById('auth-username-input');
 const authPasswordInput = document.getElementById('auth-password-input');
 const btnAuthSubmitLabel = document.getElementById('btn-auth-submit-label');
@@ -1797,23 +1799,25 @@ function initAuth() {
 
 function updateAuthUI() {
   if (currentUser) {
+    const displayName = currentUser.fullName || currentUser.username;
+
     // Topbar
     topbarLoggedInView.classList.remove('hidden');
     btnOpenLogin.classList.add('hidden');
-    topbarUserName.textContent = currentUser.username;
-    topbarAvatarInitial.textContent = (currentUser.username[0] || 'U').toUpperCase();
+    topbarUserName.textContent = displayName;
+    topbarAvatarInitial.textContent = (displayName[0] || 'U').toUpperCase();
 
     if (currentUser.isAdmin) {
       topbarUserRoleBadge.textContent = 'Admin';
-      topbarUserRoleBadge.className = 'text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 rounded';
+      topbarUserRoleBadge.className = 'text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 rounded inline-block';
     } else {
       topbarUserRoleBadge.textContent = 'Usuario';
-      topbarUserRoleBadge.className = 'text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded';
+      topbarUserRoleBadge.className = 'text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded inline-block';
     }
 
     // Sidebar
-    sidebarUserName.textContent = currentUser.username;
-    sidebarAvatarInitial.textContent = (currentUser.username[0] || 'U').toUpperCase();
+    sidebarUserName.textContent = displayName;
+    sidebarAvatarInitial.textContent = (displayName[0] || 'U').toUpperCase();
     if (currentUser.isAdmin) {
       sidebarUserRole.textContent = 'Administrador';
       sidebarUserRole.className = 'text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase block leading-none';
@@ -1850,8 +1854,6 @@ function updateAuthUI() {
 function openAuthModal(mode = 'login') {
   authMode = mode;
   switchAuthMode(mode);
-  authUsernameInput.value = '';
-  authPasswordInput.value = '';
   hideAuthError();
   modalAuth.classList.remove('hidden');
   if (btnCloseAuthModal) {
@@ -1861,7 +1863,6 @@ function openAuthModal(mode = 'login') {
       btnCloseAuthModal.classList.add('hidden');
     }
   }
-  setTimeout(() => authUsernameInput.focus(), 80);
 }
 
 function closeAuthModal() {
@@ -1873,18 +1874,40 @@ function switchAuthMode(mode) {
   authMode = mode;
   hideAuthError();
 
+  // Limpiar inputs al cambiar de pestaña
+  authUsernameInput.value = '';
+  authPasswordInput.value = '';
+  if (authFullNameInput) authFullNameInput.value = '';
+
+  // Restaurar visibilidad de contraseña a tipo password
+  authPasswordInput.type = 'password';
+  if (btnTogglePasswordVisibility) {
+    btnTogglePasswordVisibility.innerHTML = '<i class="fa-regular fa-eye text-xs"></i>';
+  }
+
   if (mode === 'login') {
-    tabLogin.className = 'flex-1 py-1.5 rounded-lg bg-white text-indigo-600 shadow-xs transition font-semibold';
-    tabRegister.className = 'flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition font-medium';
+    if (authFullNameGroup) authFullNameGroup.classList.add('hidden');
+    if (authFullNameInput) authFullNameInput.removeAttribute('required');
+
+    tabLogin.className = 'flex-1 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs transition font-semibold tab-auth-active';
+    tabRegister.className = 'flex-1 py-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition font-medium tab-auth-inactive';
     authModalTitle.textContent = 'Iniciar Sesión';
     authModalSubtitle.textContent = 'Accede a tus tareas y notas personales';
     btnAuthSubmitLabel.textContent = 'Entrar al Sistema';
+    setTimeout(() => authUsernameInput.focus(), 60);
   } else {
-    tabRegister.className = 'flex-1 py-1.5 rounded-lg bg-white text-indigo-600 shadow-xs transition font-semibold';
-    tabLogin.className = 'flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition font-medium';
+    if (authFullNameGroup) authFullNameGroup.classList.remove('hidden');
+    if (authFullNameInput) authFullNameInput.setAttribute('required', 'true');
+
+    tabRegister.className = 'flex-1 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs transition font-semibold tab-auth-active';
+    tabLogin.className = 'flex-1 py-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition font-medium tab-auth-inactive';
     authModalTitle.textContent = 'Crear Nueva Cuenta';
     authModalSubtitle.textContent = 'Regístrate para gestionar tus notas y tareas';
     btnAuthSubmitLabel.textContent = 'Crear Cuenta';
+    setTimeout(() => {
+      if (authFullNameInput) authFullNameInput.focus();
+      else authUsernameInput.focus();
+    }, 60);
   }
 }
 
@@ -1921,24 +1944,34 @@ authForm.addEventListener('submit', async (e) => {
 
   const username = authUsernameInput.value.trim();
   const password = authPasswordInput.value;
+  const fullName = authFullNameInput ? authFullNameInput.value.trim() : '';
+
+  if (authMode === 'register' && !fullName) {
+    showAuthError('Por favor ingresa tu nombre completo.');
+    if (authFullNameInput) authFullNameInput.focus();
+    return;
+  }
 
   if (!username) {
     showAuthError('Por favor ingresa un nombre de usuario.');
+    authUsernameInput.focus();
     return;
   }
 
   if (!password || password.length < 8) {
     showAuthError('La contraseña debe tener un mínimo de 8 caracteres.');
+    authPasswordInput.focus();
     return;
   }
 
   const endpoint = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+  const payload = authMode === 'register' ? { username, password, fullName } : { username, password };
 
   try {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify(payload)
     });
 
     const data = await res.json();
@@ -1960,7 +1993,8 @@ authForm.addEventListener('submit', async (e) => {
 });
 
 async function handleLogout() {
-  const confirmed = await showConfirm(`¿Cerrar la sesión de "${currentUser ? currentUser.username : 'usuario'}"?`, {
+  const displayName = currentUser ? (currentUser.fullName || currentUser.username) : 'usuario';
+  const confirmed = await showConfirm(`¿Cerrar la sesión de "${displayName}"?`, {
     title: 'Cerrar Sesión',
     confirmText: 'Aceptar',
     cancelText: 'Cancelar',
