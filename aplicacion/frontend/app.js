@@ -59,7 +59,6 @@ const badgeHighCount = document.getElementById('badge-high-count');
 const modalNewTask = document.getElementById('modal-new-task');
 const btnCloseNewTaskModal = document.getElementById('btn-close-new-task-modal');
 const btnCancelNewTaskModal = document.getElementById('btn-cancel-new-task-modal');
-const btnQuickNewTask = document.getElementById('btn-quick-new-task');
 const btnHeaderNewTask = document.getElementById('btn-header-new-task');
 const btnFabNewTask = document.getElementById('btn-fab-new-task');
 const newTaskForm = document.getElementById('new-task-form');
@@ -1315,7 +1314,6 @@ function closeNewTaskModal() {
 }
 
 // Botones para abrir modal
-if (btnQuickNewTask) btnQuickNewTask.addEventListener('click', openNewTaskModal);
 if (btnHeaderNewTask) btnHeaderNewTask.addEventListener('click', openNewTaskModal);
 if (btnFabNewTask) btnFabNewTask.addEventListener('click', openNewTaskModal);
 
