@@ -20,6 +20,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  actions: write
 
 env:
   AWS_REGION: "us-east-2"
@@ -39,7 +40,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Opcional (utilizado si es AWS Academy)
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Opcional (si es AWS Academy)
           aws-region: ${{ env.AWS_REGION }}
 
       - name: "3. Instalar Terraform"
@@ -47,34 +48,64 @@ jobs:
         with:
           terraform_version: "1.9.0"
 
-      - name: "4. Verificar Formato (fmt)"
+      - name: "4. Restaurar Estado de Terraform (Cache de GitHub)"
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ env.TF_WORKING_DIR }}/terraform.tfstate
+            ${{ env.TF_WORKING_DIR }}/terraform.tfstate.backup
+          key: tfstate-${{ github.run_id }}
+          restore-keys: |
+            tfstate-
+
+      - name: "5. Verificar Formato (fmt)"
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform fmt -check
 
-      - name: "5. Inicializar Terraform (init)"
+      - name: "6. Inicializar Terraform (init)"
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform init
 
-      - name: "6. Validar Sintaxis (validate)"
+      - name: "7. Validar Sintaxis (validate)"
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform validate -no-color
 
-      - name: "7. Generar Plan de Ejecución (plan)"
+      - name: "8. Generar Plan de Creación (plan)"
+        if: ${{ github.event_name == 'push' || github.event.inputs.action == 'apply' || github.event.inputs.action == 'plan' }}
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform plan -no-color -out=tfplan
 
-      - name: "8. Aplicar Cambios (apply)"
+      - name: "9. Aplicar Cambios (apply)"
         if: ${{ github.event_name == 'push' || github.event.inputs.action == 'apply' }}
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform apply -no-color -auto-approve tfplan
 
-      - name: "9. Destruir Infraestructura (destroy)"
+      - name: "10. Destruir Infraestructura (destroy)"
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' }}
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform destroy -no-color -auto-approve
 
-      - name: "10. Publicar Outputs en el Resumen del Job"
-        if: ${{ github.event_name == 'push' || github.event.inputs.action == 'apply' }}
+      - name: "11. Guardar Estado de Terraform (Cache de GitHub)"
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ env.TF_WORKING_DIR }}/terraform.tfstate
+            ${{ env.TF_WORKING_DIR }}/terraform.tfstate.backup
+          key: tfstate-${{ github.run_id }}
+
+      - name: "12. Respaldar Estado como Artefacto de GitHub"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state-${{ github.run_id }}
+          path: |
+            ${{ env.TF_WORKING_DIR }}/terraform.tfstate
+            ${{ env.TF_WORKING_DIR }}/terraform.tfstate.backup
+          retention-days: 30
+
+      - name: "13. Publicar Outputs en el Resumen del Job"
+        if: ${{ (github.event_name == 'push' || github.event.inputs.action == 'apply') && success() }}
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
           echo "### 🚀 Infraestructura Aprovisionada con Éxito" >> $GITHUB_STEP_SUMMARY
