@@ -1272,7 +1272,7 @@ function updateAuthUI() {
       sidebarUserRole.className = 'text-[9px] text-slate-500 font-semibold uppercase block leading-none';
     }
     btnSidebarAuth.title = 'Cerrar sesión';
-    sidebarAuthIcon.className = 'fa-solid fa-power-off text-xs';
+    sidebarAuthIcon.className = 'fa-solid fa-right-from-bracket text-xs text-rose-500';
 
     // PERMISO EXCLUSIVO: Solo el Administrador puede ver y acceder al botón DevOps
     if (currentUser.isAdmin) {
@@ -1423,7 +1423,7 @@ function handleLogout() {
   }
 }
 
-btnTopbarLogout.addEventListener('click', handleLogout);
+if (btnTopbarLogout) btnTopbarLogout.addEventListener('click', handleLogout);
 btnSidebarAuth.addEventListener('click', () => {
   if (currentUser) {
     handleLogout();
