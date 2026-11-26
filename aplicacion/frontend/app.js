@@ -16,6 +16,10 @@ let selectedFolderColor = '#4f46e5';
 let activeStatusFilter = 'all'; // 'all', 'pendiente', 'en_curso', 'completado'
 let activePriorityFilter = 'all'; // 'all', 'alta', 'media', 'baja'
 
+// Sesión y Autenticación
+let currentUser = null; // { id, username, role, isAdmin, token }
+let authMode = 'login'; // 'login' o 'register'
+
 // Tarea activa en el modal de edición detallada
 let activeEditingTask = null;
 
@@ -95,6 +99,38 @@ const modalLatency = document.getElementById('modal-latency');
 const modalUptime = document.getElementById('modal-uptime');
 const apiUrlInput = document.getElementById('api-url-input');
 const btnSaveApi = document.getElementById('btn-save-api');
+
+// DOM Elements - Autenticación & Sesión
+const modalAuth = document.getElementById('modal-auth');
+const btnOpenLogin = document.getElementById('btn-open-login');
+const btnCloseAuthModal = document.getElementById('btn-close-auth-modal');
+const tabLogin = document.getElementById('tab-login');
+const tabRegister = document.getElementById('tab-register');
+const authForm = document.getElementById('auth-form');
+const authModalTitle = document.getElementById('auth-modal-title');
+const authModalSubtitle = document.getElementById('auth-modal-subtitle');
+const authErrorBox = document.getElementById('auth-error-box');
+const authErrorText = document.getElementById('auth-error-text');
+const authUsernameInput = document.getElementById('auth-username-input');
+const authPasswordInput = document.getElementById('auth-password-input');
+const btnAuthSubmitLabel = document.getElementById('btn-auth-submit-label');
+const btnTogglePasswordVisibility = document.getElementById('btn-toggle-password-visibility');
+const quickAdminBox = document.getElementById('quick-admin-box');
+const btnFillAdmin = document.getElementById('btn-fill-admin');
+
+// Topbar User Elements
+const topbarLoggedInView = document.getElementById('topbar-logged-in-view');
+const topbarAvatarInitial = document.getElementById('topbar-avatar-initial');
+const topbarUserName = document.getElementById('topbar-user-name');
+const topbarUserRoleBadge = document.getElementById('topbar-user-role-badge');
+const btnTopbarLogout = document.getElementById('btn-topbar-logout');
+
+// Sidebar User Elements
+const sidebarAvatarInitial = document.getElementById('sidebar-avatar-initial');
+const sidebarUserName = document.getElementById('sidebar-user-name');
+const sidebarUserRole = document.getElementById('sidebar-user-role');
+const btnSidebarAuth = document.getElementById('btn-sidebar-auth');
+const sidebarAuthIcon = document.getElementById('sidebar-auth-icon');
 
 // ==========================================================
 // SISTEMA DE DROPDOWNS MODERNOS
@@ -590,6 +626,10 @@ createFolderForm.addEventListener('submit', async (e) => {
 // MODAL DEVOPS
 // ==========================================================
 function openDevopsModal() {
+  if (!currentUser || !currentUser.isAdmin) {
+    alert('Acceso restringido: Esta configuración de pipelines y AWS está reservada exclusivamente para el Administrador (admin).');
+    return;
+  }
   devopsModal.classList.remove('hidden');
   fetchTelemetry();
 }
@@ -1118,9 +1158,211 @@ window.deleteTask = async function(id) {
 };
 
 // ==========================================================
+// GESTIÓN DE SESIONES Y AUTENTICACIÓN (LOGIN & REGISTRO)
+// ==========================================================
+function initAuth() {
+  const savedUser = localStorage.getItem('TASKFLOW_USER');
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+    } catch (e) {
+      currentUser = null;
+      localStorage.removeItem('TASKFLOW_USER');
+    }
+  }
+
+  updateAuthUI();
+
+  // Si no hay sesión previa, abrimos el modal de login de forma amigable
+  if (!currentUser) {
+    openAuthModal('login');
+  }
+}
+
+function updateAuthUI() {
+  if (currentUser) {
+    // Topbar
+    topbarLoggedInView.classList.remove('hidden');
+    btnOpenLogin.classList.add('hidden');
+    topbarUserName.textContent = currentUser.username;
+    topbarAvatarInitial.textContent = (currentUser.username[0] || 'U').toUpperCase();
+
+    if (currentUser.isAdmin) {
+      topbarUserRoleBadge.textContent = 'Admin';
+      topbarUserRoleBadge.className = 'text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded';
+    } else {
+      topbarUserRoleBadge.textContent = 'Usuario';
+      topbarUserRoleBadge.className = 'text-[9px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded';
+    }
+
+    // Sidebar
+    sidebarUserName.textContent = currentUser.username;
+    sidebarAvatarInitial.textContent = (currentUser.username[0] || 'U').toUpperCase();
+    if (currentUser.isAdmin) {
+      sidebarUserRole.textContent = 'Administrador';
+      sidebarUserRole.className = 'text-[9px] text-amber-600 font-bold uppercase block leading-none';
+    } else {
+      sidebarUserRole.textContent = 'Usuario Estándar';
+      sidebarUserRole.className = 'text-[9px] text-slate-500 font-semibold uppercase block leading-none';
+    }
+    btnSidebarAuth.title = 'Cerrar sesión';
+    sidebarAuthIcon.className = 'fa-solid fa-power-off text-xs';
+
+    // PERMISO EXCLUSIVO: Solo el Administrador puede ver y acceder al botón DevOps
+    if (currentUser.isAdmin) {
+      btnOpenDevops.classList.remove('hidden');
+    } else {
+      btnOpenDevops.classList.add('hidden');
+    }
+  } else {
+    // Sin sesión activa
+    topbarLoggedInView.classList.add('hidden');
+    btnOpenLogin.classList.remove('hidden');
+
+    sidebarUserName.textContent = 'Invitado';
+    sidebarAvatarInitial.textContent = '?';
+    sidebarUserRole.textContent = 'Sin Sesión';
+    sidebarUserRole.className = 'text-[9px] text-slate-400 font-semibold uppercase block leading-none';
+    btnSidebarAuth.title = 'Iniciar sesión';
+    sidebarAuthIcon.className = 'fa-solid fa-arrow-right-to-bracket text-xs';
+
+    // Ocultar botón DevOps a usuarios sin sesión
+    btnOpenDevops.classList.add('hidden');
+  }
+}
+
+function openAuthModal(mode = 'login') {
+  authMode = mode;
+  switchAuthMode(mode);
+  authUsernameInput.value = '';
+  authPasswordInput.value = '';
+  hideAuthError();
+  modalAuth.classList.remove('hidden');
+  setTimeout(() => authUsernameInput.focus(), 80);
+}
+
+function closeAuthModal() {
+  modalAuth.classList.add('hidden');
+}
+
+function switchAuthMode(mode) {
+  authMode = mode;
+  hideAuthError();
+
+  if (mode === 'login') {
+    tabLogin.className = 'flex-1 py-1.5 rounded-lg bg-white text-indigo-600 shadow-xs transition font-semibold';
+    tabRegister.className = 'flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition font-medium';
+    authModalTitle.textContent = 'Iniciar Sesión';
+    authModalSubtitle.textContent = 'Accede a tus tareas y configuraciones';
+    btnAuthSubmitLabel.textContent = 'Entrar al Sistema';
+    quickAdminBox.classList.remove('hidden');
+  } else {
+    tabRegister.className = 'flex-1 py-1.5 rounded-lg bg-white text-indigo-600 shadow-xs transition font-semibold';
+    tabLogin.className = 'flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition font-medium';
+    authModalTitle.textContent = 'Crear Nueva Cuenta';
+    authModalSubtitle.textContent = 'Regístrate para gestionar tus notas y tareas';
+    btnAuthSubmitLabel.textContent = 'Crear Cuenta';
+    quickAdminBox.classList.add('hidden');
+  }
+}
+
+function showAuthError(msg) {
+  authErrorText.textContent = msg;
+  authErrorBox.classList.remove('hidden');
+}
+
+function hideAuthError() {
+  authErrorBox.classList.add('hidden');
+  authErrorText.textContent = '';
+}
+
+btnOpenLogin.addEventListener('click', () => openAuthModal('login'));
+btnCloseAuthModal.addEventListener('click', closeAuthModal);
+modalAuth.addEventListener('click', (e) => {
+  if (e.target === modalAuth) closeAuthModal();
+});
+
+tabLogin.addEventListener('click', () => switchAuthMode('login'));
+tabRegister.addEventListener('click', () => switchAuthMode('register'));
+
+btnFillAdmin.addEventListener('click', () => {
+  authUsernameInput.value = 'admin';
+  authPasswordInput.value = '12345678';
+  hideAuthError();
+  authPasswordInput.focus();
+});
+
+btnTogglePasswordVisibility.addEventListener('click', () => {
+  const isPass = authPasswordInput.type === 'password';
+  authPasswordInput.type = isPass ? 'text' : 'password';
+  btnTogglePasswordVisibility.innerHTML = isPass ? '<i class="fa-regular fa-eye-slash text-xs"></i>' : '<i class="fa-regular fa-eye text-xs"></i>';
+});
+
+authForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideAuthError();
+
+  const username = authUsernameInput.value.trim();
+  const password = authPasswordInput.value;
+
+  if (!username) {
+    showAuthError('Por favor ingresa un nombre de usuario.');
+    return;
+  }
+
+  if (!password || password.length < 8) {
+    showAuthError('La contraseña debe tener un mínimo de 8 caracteres.');
+    return;
+  }
+
+  const endpoint = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      showAuthError(data.error || 'Ocurrió un error en la autenticación.');
+      return;
+    }
+
+    currentUser = data.data;
+    localStorage.setItem('TASKFLOW_USER', JSON.stringify(currentUser));
+    updateAuthUI();
+    closeAuthModal();
+  } catch (err) {
+    showAuthError('No se pudo conectar con el backend. Verifica que el servidor esté activo.');
+  }
+});
+
+function handleLogout() {
+  if (confirm(`¿Cerrar la sesión de "${currentUser ? currentUser.username : 'usuario'}"?`)) {
+    localStorage.removeItem('TASKFLOW_USER');
+    currentUser = null;
+    updateAuthUI();
+    openAuthModal('login');
+  }
+}
+
+btnTopbarLogout.addEventListener('click', handleLogout);
+btnSidebarAuth.addEventListener('click', () => {
+  if (currentUser) {
+    handleLogout();
+  } else {
+    openAuthModal('login');
+  }
+});
+
+// ==========================================================
 // INICIALIZACIÓN
 // ==========================================================
 apiUrlInput.value = API_BASE_URL;
+initAuth();
 fetchTelemetry();
 fetchFolders().then(() => {
   fetchTasks();

@@ -22,6 +22,20 @@ app.use((req, res, next) => {
 });
 
 // ==========================================================
+// Almacén de Usuarios y Sesiones (Autenticación Básica)
+// Usuario Administrador por defecto: admin / 12345678
+// ==========================================================
+let users = [
+  {
+    id: 1,
+    username: 'admin',
+    password: '12345678',
+    role: 'admin',
+    createdAt: new Date().toISOString()
+  }
+];
+
+// ==========================================================
 // Almacén de Carpetas / Categorías
 // ==========================================================
 let folders = [
@@ -123,6 +137,106 @@ app.get('/api/info', (req, res) => {
     totalTasks: tasks.length,
     totalFolders: folders.length
   });
+});
+
+// ==========================================================
+// ENDPOINTS DE AUTENTICACIÓN & SESIONES
+// ==========================================================
+
+// Iniciar Sesión (Login)
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ success: false, error: 'Usuario y contraseña son requeridos.' });
+  }
+
+  const cleanUser = String(username).trim().toLowerCase();
+  const user = users.find(u => u.username.toLowerCase() === cleanUser && u.password === String(password));
+
+  if (!user) {
+    return res.status(401).json({ success: false, error: 'Usuario o contraseña incorrectos.' });
+  }
+
+  const token = `token-${user.id}-${Date.now().toString(36)}`;
+  console.log(`[SESIÓN INICIADA] Usuario: "${user.username}" (Rol: ${user.role})`);
+
+  res.json({
+    success: true,
+    data: {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      isAdmin: user.role === 'admin',
+      token
+    }
+  });
+});
+
+// Registrar nueva cuenta de usuario
+app.post('/api/auth/register', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || typeof username !== 'string' || !username.trim()) {
+    return res.status(400).json({ success: false, error: 'El nombre de usuario es obligatorio.' });
+  }
+
+  const cleanUser = username.trim().toLowerCase();
+  if (cleanUser.length < 3) {
+    return res.status(400).json({ success: false, error: 'El usuario debe tener al menos 3 caracteres.' });
+  }
+
+  if (!password || typeof password !== 'string' || password.length < 8) {
+    return res.status(400).json({ success: false, error: 'La contraseña debe tener mínimo 8 caracteres.' });
+  }
+
+  const existing = users.find(u => u.username.toLowerCase() === cleanUser);
+  if (existing) {
+    return res.status(409).json({ success: false, error: 'Ese nombre de usuario ya está registrado. Elige otro.' });
+  }
+
+  const newUser = {
+    id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+    username: username.trim(),
+    password: String(password),
+    role: 'user', // Los nuevos registros siempre tienen rol 'user'
+    createdAt: new Date().toISOString()
+  };
+
+  users.push(newUser);
+  console.log(`[USUARIO REGISTRADO] ID: ${newUser.id} - "${newUser.username}" (Rol: ${newUser.role})`);
+
+  const token = `token-${newUser.id}-${Date.now().toString(36)}`;
+  res.status(201).json({
+    success: true,
+    data: {
+      id: newUser.id,
+      username: newUser.username,
+      role: newUser.role,
+      isAdmin: false,
+      token
+    }
+  });
+});
+
+// Verificar sesión actual
+app.get('/api/auth/me', (req, res) => {
+  const usernameHeader = req.headers['x-user-name'];
+
+  if (usernameHeader) {
+    const user = users.find(u => u.username.toLowerCase() === String(usernameHeader).toLowerCase());
+    if (user) {
+      return res.json({
+        success: true,
+        data: {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          isAdmin: user.role === 'admin'
+        }
+      });
+    }
+  }
+
+  res.status(401).json({ success: false, error: 'No autenticado.' });
 });
 
 // ==========================================================
