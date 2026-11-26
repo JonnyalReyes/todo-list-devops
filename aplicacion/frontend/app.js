@@ -12,6 +12,10 @@ let activeFolderId = null;
 let searchTerm = '';
 let selectedFolderColor = '#4f46e5';
 
+// Filtros Interactivos en Vivo (Barra de Filtros Principal)
+let activeStatusFilter = 'all'; // 'all', 'pendiente', 'en_curso', 'completado'
+let activePriorityFilter = 'all'; // 'all', 'alta', 'media', 'baja'
+
 // Tarea activa en el modal de edición detallada
 let activeEditingTask = null;
 
@@ -172,6 +176,83 @@ setupDropdown('dropdown-detail-priority', (val) => {
 
 setupDropdown('dropdown-task-folder');
 setupDropdown('dropdown-detail-folder');
+
+// Inicializar Dropdown de Filtro de Prioridad de la lista
+setupDropdown('dropdown-filter-priority', (val) => {
+  activePriorityFilter = val;
+  const triggerIcon = document.querySelector('#dropdown-filter-priority .fa-filter, #dropdown-filter-priority .fa-list-ul, #dropdown-filter-priority .fa-fire, #dropdown-filter-priority .fa-flag');
+  if (triggerIcon) {
+    if (val === 'alta') triggerIcon.className = 'fa-solid fa-fire text-rose-500 text-xs';
+    else if (val === 'media') triggerIcon.className = 'fa-solid fa-flag text-amber-500 text-xs';
+    else if (val === 'baja') triggerIcon.className = 'fa-solid fa-flag text-slate-400 text-xs';
+    else triggerIcon.className = 'fa-solid fa-filter text-indigo-500 text-xs';
+  }
+  updateFilterIndicators();
+  renderTasks();
+});
+
+// ==========================================================
+// CONTROL DE FILTROS EN VIVO (ESTADO & PRIORIDAD)
+// ==========================================================
+const btnClearFilters = document.getElementById('btn-clear-filters');
+const activeFilterIndicator = document.getElementById('active-filter-indicator');
+
+document.querySelectorAll('.filter-status-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.filter-status-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeStatusFilter = pill.dataset.status;
+    updateFilterIndicators();
+    renderTasks();
+  });
+});
+
+if (btnClearFilters) {
+  btnClearFilters.addEventListener('click', () => {
+    resetActiveFilters();
+  });
+}
+
+function resetActiveFilters() {
+  activeStatusFilter = 'all';
+  activePriorityFilter = 'all';
+  document.querySelectorAll('.filter-status-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.status === 'all');
+  });
+  const filterPriorityHidden = document.getElementById('filter-priority-select');
+  if (filterPriorityHidden) filterPriorityHidden.value = 'all';
+  const filterPriorityLabel = document.querySelector('#dropdown-filter-priority .trigger-label');
+  if (filterPriorityLabel) filterPriorityLabel.textContent = 'Todas';
+  const triggerIcon = document.querySelector('#dropdown-filter-priority .fa-filter, #dropdown-filter-priority .fa-list-ul, #dropdown-filter-priority .fa-fire, #dropdown-filter-priority .fa-flag');
+  if (triggerIcon) triggerIcon.className = 'fa-solid fa-filter text-indigo-500 text-xs';
+  updateFilterIndicators();
+  renderTasks();
+}
+
+function updateFilterIndicators() {
+  const isFiltered = activeStatusFilter !== 'all' || activePriorityFilter !== 'all';
+  if (btnClearFilters) {
+    btnClearFilters.classList.toggle('hidden', !isFiltered);
+  }
+  if (activeFilterIndicator) {
+    if (isFiltered) {
+      const parts = [];
+      if (activeStatusFilter !== 'all') {
+        const statusMap = { pendiente: 'Pendientes ⏳', en_curso: 'En Curso 🚀', completado: 'Completadas ✅' };
+        parts.push(statusMap[activeStatusFilter] || activeStatusFilter);
+      }
+      if (activePriorityFilter !== 'all') {
+        const priorityMap = { alta: 'Alta 🔥', media: 'Media', baja: 'Baja' };
+        parts.push(`Prioridad ${priorityMap[activePriorityFilter] || activePriorityFilter}`);
+      }
+      activeFilterIndicator.textContent = `(Filtro: ${parts.join(' + ')})`;
+      activeFilterIndicator.classList.remove('hidden');
+    } else {
+      activeFilterIndicator.textContent = '';
+      activeFilterIndicator.classList.add('hidden');
+    }
+  }
+}
 
 // ==========================================================
 // CONTROL DEL SIDEBAR EN MÓVIL
@@ -724,19 +805,30 @@ function updateViewHeaders(view) {
     currentViewTitle.innerHTML = `<i class="fa-solid fa-clock text-amber-500 text-xs sm:text-sm"></i><span>Tareas Pendientes</span>`;
     currentViewSubtitle.textContent = `Tareas que requieren tu atención`;
     filterDisplayLabel.textContent = `Pendientes ⏳`;
+    syncStatusFilterPill('pendiente');
   } else if (view === 'status-en_curso') {
     currentViewTitle.innerHTML = `<i class="fa-solid fa-spinner fa-spin-pulse text-sky-500 text-xs sm:text-sm"></i><span>Tareas En Curso</span>`;
     currentViewSubtitle.textContent = `Actividades en progreso actualmente`;
     filterDisplayLabel.textContent = `En Curso 🚀`;
+    syncStatusFilterPill('en_curso');
   } else if (view === 'status-completado') {
     currentViewTitle.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 text-xs sm:text-sm"></i><span>Tareas Completadas</span>`;
     currentViewSubtitle.textContent = `Historial de actividades finalizadas`;
     filterDisplayLabel.textContent = `Completadas ✅`;
+    syncStatusFilterPill('completado');
   } else if (view === 'priority-high') {
     currentViewTitle.innerHTML = `<i class="fa-solid fa-fire text-rose-500 text-xs sm:text-sm"></i><span>Prioridad Alta</span>`;
     currentViewSubtitle.textContent = `Tareas críticas y urgentes`;
     filterDisplayLabel.textContent = `Alta Prioridad 🔥`;
   }
+}
+
+function syncStatusFilterPill(status) {
+  activeStatusFilter = status;
+  document.querySelectorAll('.filter-status-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.status === status);
+  });
+  updateFilterIndicators();
 }
 
 searchInput.addEventListener('input', (e) => {
@@ -783,19 +875,31 @@ function updateBadges() {
 function renderTasks() {
   let filtered = [...allTasks];
 
-  if (currentView === 'status-pendiente') {
-    filtered = filtered.filter(t => t.status === 'pendiente');
-  } else if (currentView === 'status-en_curso') {
-    filtered = filtered.filter(t => t.status === 'en_curso');
-  } else if (currentView === 'status-completado') {
-    filtered = filtered.filter(t => t.status === 'completado');
-  } else if (currentView === 'priority-high') {
-    filtered = filtered.filter(t => t.priority === 'alta');
-  } else if (currentView.startsWith('folder-')) {
+  // 1. Filtrar por Carpeta (si se seleccionó una carpeta en el menú lateral)
+  if (currentView.startsWith('folder-')) {
     const fId = currentView.replace('folder-', '');
     filtered = filtered.filter(t => t.folderId === fId);
   }
 
+  // 2. Determinar filtro de Estado:
+  const effectiveStatus = activeStatusFilter !== 'all'
+    ? activeStatusFilter
+    : (currentView.startsWith('status-') ? currentView.replace('status-', '') : 'all');
+
+  if (effectiveStatus !== 'all') {
+    filtered = filtered.filter(t => t.status === effectiveStatus);
+  }
+
+  // 3. Determinar filtro de Prioridad:
+  const effectivePriority = activePriorityFilter !== 'all'
+    ? activePriorityFilter
+    : (currentView === 'priority-high' ? 'alta' : 'all');
+
+  if (effectivePriority !== 'all') {
+    filtered = filtered.filter(t => t.priority === effectivePriority);
+  }
+
+  // 4. Búsqueda por texto (título, descripción, mini tareas)
   if (searchTerm) {
     filtered = filtered.filter(t => 
       t.title.toLowerCase().includes(searchTerm) || 
@@ -807,11 +911,12 @@ function renderTasks() {
   statusTaskCount.textContent = `${filtered.length} ${filtered.length === 1 ? 'tarea' : 'tareas'}`;
 
   if (filtered.length === 0) {
+    const isFiltered = activeStatusFilter !== 'all' || activePriorityFilter !== 'all' || searchTerm;
     tasksContainer.innerHTML = `
       <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 space-y-2">
         <i class="fa-regular fa-folder-open text-3xl text-slate-300"></i>
-        <p class="text-xs font-medium">No se encontraron tareas en esta sección.</p>
-        <p class="text-[11px] text-slate-400">Agrega una nueva tarea arriba para comenzar.</p>
+        <p class="text-xs font-semibold text-slate-600">${isFiltered ? 'No hay tareas que coincidan con los filtros seleccionados.' : 'No se encontraron tareas en esta sección.'}</p>
+        <p class="text-[11px] text-slate-400">${isFiltered ? 'Prueba cambiando los filtros de estado o prioridad arriba.' : 'Agrega una nueva tarea arriba para comenzar.'}</p>
       </div>
     `;
     return;
