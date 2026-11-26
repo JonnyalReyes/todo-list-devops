@@ -434,13 +434,13 @@ function adjustDropdownPosition(menu, trigger) {
   }
 }
 
-// Cerrar todos los dropdowns al hacer clic fuera o redimensionar pantalla
+// Cerrar todos los dropdowns y calendarios al hacer clic fuera o redimensionar pantalla
 document.addEventListener('click', () => {
-  document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+  document.querySelectorAll('.dropdown-menu, .datepicker-menu').forEach(menu => menu.classList.add('hidden'));
 });
 
 window.addEventListener('resize', () => {
-  document.querySelectorAll('.dropdown-menu:not(.hidden)').forEach(menu => {
+  document.querySelectorAll('.dropdown-menu:not(.hidden), .datepicker-menu:not(.hidden)').forEach(menu => {
     menu.classList.add('hidden');
   });
 });
@@ -511,6 +511,233 @@ setupDropdown('dropdown-detail-folder');
 setupDropdown('dropdown-folder-icon');
 
 // ==========================================================
+// SISTEMA DE CALENDARIO Y SELECTOR DE FECHA PERSONALIZADO
+// ==========================================================
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return 'dd/mm/aaaa';
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+function setCustomDatePickerValue(containerId, dateStr) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const hiddenInput = container.querySelector('input[type="hidden"]');
+  const label = container.querySelector('.datepicker-label');
+  const clearBtn = container.querySelector('.datepicker-clear-btn');
+
+  const val = dateStr || '';
+  if (hiddenInput) hiddenInput.value = val;
+
+  if (label) {
+    if (val) {
+      label.textContent = formatDisplayDate(val);
+      label.classList.remove('text-slate-400', 'font-normal');
+      label.classList.add('text-slate-800', 'dark:text-slate-100', 'font-semibold');
+    } else {
+      label.textContent = 'dd/mm/aaaa';
+      label.classList.add('text-slate-400', 'font-normal');
+      label.classList.remove('text-slate-800', 'dark:text-slate-100', 'font-semibold');
+    }
+  }
+
+  if (clearBtn) {
+    if (val) {
+      clearBtn.classList.remove('hidden');
+    } else {
+      clearBtn.classList.add('hidden');
+    }
+  }
+}
+
+function setupDatePicker(containerId, onSelectCallback) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const trigger = container.querySelector('.datepicker-trigger');
+  const menu = container.querySelector('.datepicker-menu');
+  const hiddenInput = container.querySelector('input[type="hidden"]');
+  const clearBtn = container.querySelector('.datepicker-clear-btn');
+  const monthYearEl = container.querySelector('.datepicker-month-year');
+  const prevBtn = container.querySelector('.datepicker-prev-btn');
+  const nextBtn = container.querySelector('.datepicker-next-btn');
+  const daysGrid = container.querySelector('.datepicker-days-grid');
+  const actionClear = container.querySelector('.datepicker-action-clear');
+  const actionToday = container.querySelector('.datepicker-action-today');
+
+  let viewYear = new Date().getFullYear();
+  let viewMonth = new Date().getMonth();
+
+  function renderCalendar() {
+    const monthNames = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    if (monthYearEl) {
+      monthYearEl.textContent = `${monthNames[viewMonth]} de ${viewYear}`;
+    }
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const selectedVal = hiddenInput ? hiddenInput.value : '';
+
+    const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInCurrentMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
+
+    let daysHtml = '';
+
+    // Días del mes anterior
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const dayNum = daysInPrevMonth - i;
+      const prevDate = new Date(viewYear, viewMonth - 1, dayNum);
+      const prevDateStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}-${String(prevDate.getDate()).padStart(2, '0')}`;
+      daysHtml += `
+        <button type="button" class="datepicker-day datepicker-day-other-month w-8 h-8 mx-auto flex items-center justify-center rounded-xl text-xs text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition cursor-pointer" data-date="${prevDateStr}">
+          ${dayNum}
+        </button>
+      `;
+    }
+
+    // Días del mes actual
+    for (let day = 1; day <= daysInCurrentMonth; day++) {
+      const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isSelected = selectedVal === dateStr;
+      const isToday = todayStr === dateStr;
+
+      let classes = 'datepicker-day w-8 h-8 mx-auto flex items-center justify-center rounded-xl text-xs transition cursor-pointer select-none ';
+      if (isSelected) {
+        classes += 'bg-indigo-600 text-white font-bold shadow-xs hover:bg-indigo-700 datepicker-day-selected';
+      } else if (isToday) {
+        classes += 'border border-indigo-500 font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-800';
+      } else {
+        classes += 'text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800 font-medium';
+      }
+
+      daysHtml += `
+        <button type="button" class="${classes}" data-date="${dateStr}">
+          ${day}
+        </button>
+      `;
+    }
+
+    // Días del mes siguiente
+    const totalCells = firstDayIndex + daysInCurrentMonth;
+    const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let day = 1; day <= remainingCells; day++) {
+      const nextDate = new Date(viewYear, viewMonth + 1, day);
+      const nextDateStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+      daysHtml += `
+        <button type="button" class="datepicker-day datepicker-day-other-month w-8 h-8 mx-auto flex items-center justify-center rounded-xl text-xs text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition cursor-pointer" data-date="${nextDateStr}">
+          ${day}
+        </button>
+      `;
+    }
+
+    if (daysGrid) daysGrid.innerHTML = daysHtml;
+  }
+
+  function selectDate(dateStr) {
+    setCustomDatePickerValue(containerId, dateStr);
+    menu.classList.add('hidden');
+    if (typeof onSelectCallback === 'function') onSelectCallback(dateStr);
+  }
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = menu.classList.contains('hidden');
+
+    document.querySelectorAll('.dropdown-menu, .datepicker-menu').forEach(m => {
+      if (m !== menu) m.classList.add('hidden');
+    });
+
+    if (willOpen) {
+      if (hiddenInput && hiddenInput.value) {
+        const [y, m] = hiddenInput.value.split('-').map(Number);
+        if (!isNaN(y) && !isNaN(m)) {
+          viewYear = y;
+          viewMonth = m - 1;
+        }
+      } else {
+        viewYear = new Date().getFullYear();
+        viewMonth = new Date().getMonth();
+      }
+      renderCalendar();
+      menu.classList.remove('hidden');
+      adjustDropdownPosition(menu, trigger);
+    } else {
+      menu.classList.add('hidden');
+    }
+  });
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      viewMonth--;
+      if (viewMonth < 0) {
+        viewMonth = 11;
+        viewYear--;
+      }
+      renderCalendar();
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      viewMonth++;
+      if (viewMonth > 11) {
+        viewMonth = 0;
+        viewYear++;
+      }
+      renderCalendar();
+    });
+  }
+
+  if (daysGrid) {
+    daysGrid.addEventListener('click', (e) => {
+      const btn = e.target.closest('.datepicker-day');
+      if (!btn) return;
+      e.stopPropagation();
+      selectDate(btn.dataset.date);
+    });
+  }
+
+  if (actionClear) {
+    actionClear.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectDate('');
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectDate('');
+    });
+  }
+
+  if (actionToday) {
+    actionToday.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const t = new Date();
+      const todayStr = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+      selectDate(todayStr);
+    });
+  }
+}
+
+// Inicializar selectores de fecha personalizados
+setupDatePicker('datepicker-new-task');
+setupDatePicker('datepicker-detail-due-date');
+
+// ==========================================================
 // CONTROL DEL SIDEBAR EN MÓVIL
 // ==========================================================
 function openSidebar() {
@@ -542,7 +769,7 @@ function openTaskDetailModal(taskId) {
   // Cargar datos
   detailTitleInput.value = activeEditingTask.title || '';
   detailDescInput.value = activeEditingTask.description || '';
-  detailDueDateInput.value = activeEditingTask.dueDate || '';
+  setCustomDatePickerValue('datepicker-detail-due-date', activeEditingTask.dueDate || '');
   newSubtaskInput.value = '';
 
   // Actualizar Dropdown de Estado en Modal
@@ -1404,7 +1631,7 @@ function openNewTaskModal() {
   // Limpiar formulario previo
   newTaskTitleInput.value = '';
   newTaskDescInput.value = '';
-  newTaskDueDateInput.value = '';
+  setCustomDatePickerValue('datepicker-new-task', '');
 
   // 1. Asignar Estado por defecto según la pestaña activa (currentView)
   let defaultStatus = 'pendiente';

@@ -581,6 +581,33 @@ html.dark .dropdown-trigger .trigger-label {
   color: #f8fafc !important;
 }
 
+/* Datepicker Personalizado en Modo Oscuro */
+html.dark .datepicker-menu {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.7), 0 10px 12px -6px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .datepicker-trigger {
+  background-color: #0b0f19 !important;
+  border-color: #1f2937 !important;
+  color: #f8fafc !important;
+}
+
+html.dark .datepicker-month-year {
+  color: #f8fafc !important;
+}
+
+html.dark .datepicker-day-other-month {
+  color: #4b5563 !important;
+}
+
+html.dark .datepicker-day:hover:not(.datepicker-day-selected) {
+  background-color: #1f2937 !important;
+  color: #f8fafc !important;
+}
+
 /* Scrollbars en Modo Oscuro */
 html.dark ::-webkit-scrollbar-thumb {
   background: #374151;
