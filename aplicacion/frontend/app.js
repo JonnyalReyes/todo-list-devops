@@ -145,6 +145,52 @@ const sidebarUserRole = document.getElementById('sidebar-user-role');
 const btnSidebarAuth = document.getElementById('btn-sidebar-auth');
 const sidebarAuthIcon = document.getElementById('sidebar-auth-icon');
 
+// DOM Elements - Modo Oscuro / Claro
+const btnThemeToggle = document.getElementById('btn-theme-toggle');
+const themeToggleIcon = document.getElementById('theme-toggle-icon');
+const themeToggleIconWrap = document.getElementById('theme-toggle-icon-wrap');
+const themeToggleLabel = document.getElementById('theme-toggle-label');
+const themeToggleSwitch = document.getElementById('theme-toggle-switch');
+const themeToggleDot = document.getElementById('theme-toggle-dot');
+
+function updateThemeUI(isDark) {
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+    if (themeToggleIcon) themeToggleIcon.className = 'fa-solid fa-sun text-xs text-amber-400';
+    if (themeToggleIconWrap) themeToggleIconWrap.className = 'w-6 h-6 rounded-lg bg-amber-400/20 text-amber-400 flex items-center justify-center shrink-0 transition';
+    if (themeToggleLabel) themeToggleLabel.textContent = 'Modo Claro';
+    if (themeToggleSwitch) themeToggleSwitch.className = 'w-8 h-4.5 bg-indigo-600 rounded-full p-0.5 transition flex items-center';
+    if (themeToggleDot) themeToggleDot.className = 'w-3.5 h-3.5 rounded-full bg-white shadow-xs transform transition duration-200 translate-x-3.5';
+    if (btnThemeToggle) btnThemeToggle.title = 'Cambiar a Modo Claro';
+  } else {
+    document.documentElement.classList.remove('dark');
+    if (themeToggleIcon) themeToggleIcon.className = 'fa-solid fa-moon text-xs text-indigo-600';
+    if (themeToggleIconWrap) themeToggleIconWrap.className = 'w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 transition';
+    if (themeToggleLabel) themeToggleLabel.textContent = 'Modo Oscuro';
+    if (themeToggleSwitch) themeToggleSwitch.className = 'w-8 h-4.5 bg-slate-200 rounded-full p-0.5 transition flex items-center';
+    if (themeToggleDot) themeToggleDot.className = 'w-3.5 h-3.5 rounded-full bg-white shadow-xs transform transition duration-200 translate-x-0';
+    if (btnThemeToggle) btnThemeToggle.title = 'Cambiar a Modo Oscuro';
+  }
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('TASKFLOW_THEME');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+  updateThemeUI(isDark);
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.classList.contains('dark');
+  const newTheme = isDark ? 'light' : 'dark';
+  localStorage.setItem('TASKFLOW_THEME', newTheme);
+  updateThemeUI(!isDark);
+}
+
+if (btnThemeToggle) {
+  btnThemeToggle.addEventListener('click', toggleTheme);
+}
+
 // DOM Elements - Modal de Confirmación y Alertas Personalizado
 const modalConfirm = document.getElementById('modal-confirm');
 const confirmModalTitle = document.getElementById('confirm-modal-title');
@@ -1594,6 +1640,7 @@ btnSidebarAuth.addEventListener('click', () => {
 // INICIALIZACIÓN
 // ==========================================================
 apiUrlInput.value = API_BASE_URL;
+initTheme();
 initAuth();
 fetchTelemetry();
 

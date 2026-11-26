@@ -7,6 +7,17 @@
   <!-- Favicon de la aplicación -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    };
+    // Pre-cargar tema antes de pintar la pantalla para evitar parpadeos blancos
+    if (localStorage.getItem('TASKFLOW_THEME') === 'dark' || (!('TASKFLOW_THEME' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -109,6 +120,25 @@
     <!-- Footer del Sidebar con Usuario y Botón DevOps (Solo Admin) -->
     <div class="p-2.5 sm:p-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
       
+      <!-- Selector / Botón Modo Oscuro / Claro -->
+      <button 
+        id="btn-theme-toggle" 
+        type="button"
+        class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium transition shadow-2xs group cursor-pointer"
+        title="Alternar entre Modo Oscuro y Modo Claro"
+      >
+        <div class="flex items-center gap-2 min-w-0">
+          <div id="theme-toggle-icon-wrap" class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 transition">
+            <i id="theme-toggle-icon" class="fa-solid fa-moon text-xs"></i>
+          </div>
+          <span id="theme-toggle-label" class="font-semibold text-xs text-slate-700 truncate">Modo Oscuro</span>
+        </div>
+        <!-- Switch visual -->
+        <div id="theme-toggle-switch" class="w-8 h-4.5 bg-slate-200 rounded-full p-0.5 transition flex items-center">
+          <div id="theme-toggle-dot" class="w-3.5 h-3.5 rounded-full bg-white shadow-xs transform transition duration-200 translate-x-0"></div>
+        </div>
+      </button>
+
       <!-- Card Usuario Activo en Sidebar -->
       <div id="sidebar-user-card" class="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/80 text-xs shadow-2xs">
         <div class="flex items-center gap-2 min-w-0">
