@@ -993,6 +993,13 @@ window.selectFolder = function(folderId) {
   activeFolderId = folderId;
   currentView = `folder-${folderId}`;
 
+  if (searchInput) {
+    searchInput.value = '';
+    searchTerm = '';
+    const btnClearSearch = document.getElementById('btn-clear-search');
+    if (btnClearSearch) btnClearSearch.classList.add('hidden');
+  }
+
   document.querySelectorAll('.nav-view-btn').forEach(btn => btn.classList.remove('active'));
   renderFoldersList();
 
@@ -1050,6 +1057,13 @@ document.querySelectorAll('.nav-view-btn').forEach(btn => {
     activeFolderId = null;
     currentView = btn.dataset.view;
 
+    if (searchInput) {
+      searchInput.value = '';
+      searchTerm = '';
+      const btnClear = document.getElementById('btn-clear-search');
+      if (btnClear) btnClear.classList.add('hidden');
+    }
+
     updateViewHeaders(currentView);
     renderFoldersList();
     closeSidebar();
@@ -1081,10 +1095,63 @@ function updateViewHeaders(view) {
   }
 }
 
-searchInput.addEventListener('input', (e) => {
-  searchTerm = e.target.value.trim().toLowerCase();
-  renderTasks();
-});
+// Helper para normalizar texto (ignorar mayúsculas, minúsculas y tildes)
+function normalizeText(text) {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+const btnClearSearch = document.getElementById('btn-clear-search');
+
+if (searchInput) {
+  searchInput.addEventListener('input', (e) => {
+    searchTerm = e.target.value.trim();
+
+    if (btnClearSearch) {
+      if (searchTerm) {
+        btnClearSearch.classList.remove('hidden');
+      } else {
+        btnClearSearch.classList.add('hidden');
+      }
+    }
+
+    if (searchTerm) {
+      currentViewTitle.innerHTML = `<i class="fa-solid fa-magnifying-glass text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm"></i><span>Búsqueda: "${escapeHtml(searchTerm)}"</span>`;
+      currentViewSubtitle.textContent = `Mostrando resultados en todas tus tareas y notas`;
+      if (filterDisplayLabel) filterDisplayLabel.textContent = `Búsqueda global`;
+    } else {
+      updateViewHeaders(currentView);
+    }
+
+    renderTasks();
+  });
+
+  if (btnClearSearch) {
+    btnClearSearch.addEventListener('click', () => {
+      searchInput.value = '';
+      searchTerm = '';
+      btnClearSearch.classList.add('hidden');
+      updateViewHeaders(currentView);
+      renderTasks();
+      searchInput.focus();
+    });
+  }
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      searchInput.value = '';
+      searchTerm = '';
+      if (btnClearSearch) btnClearSearch.classList.add('hidden');
+      updateViewHeaders(currentView);
+      renderTasks();
+      searchInput.blur();
+    }
+  });
+}
 
 // ==========================================================
 // TAREAS / NOTAS
@@ -1133,28 +1200,34 @@ function updateBadges() {
 
 function renderTasks() {
   let filtered = [...allTasks];
+  const term = normalizeText(searchTerm);
 
-  // 1. Filtrar según la vista activa del menú lateral
-  if (currentView.startsWith('folder-')) {
-    const fId = currentView.replace('folder-', '');
-    filtered = filtered.filter(t => t.folderId === fId);
-  } else if (currentView === 'status-pendiente') {
-    filtered = filtered.filter(t => t.status === 'pendiente');
-  } else if (currentView === 'status-en_curso') {
-    filtered = filtered.filter(t => t.status === 'en_curso');
-  } else if (currentView === 'status-completado') {
-    filtered = filtered.filter(t => t.status === 'completado');
-  } else if (currentView === 'priority-high') {
-    filtered = filtered.filter(t => t.priority === 'alta' && t.status !== 'completado');
-  }
-
-  // 2. Búsqueda por texto (título, descripción, mini tareas)
-  if (searchTerm) {
-    filtered = filtered.filter(t => 
-      t.title.toLowerCase().includes(searchTerm) || 
-      (t.description && t.description.toLowerCase().includes(searchTerm)) ||
-      (t.subtasks && t.subtasks.some(st => st.title.toLowerCase().includes(searchTerm)))
-    );
+  // 1. Si hay término de búsqueda, la búsqueda es GLOBAL en todo el registro
+  if (term) {
+    filtered = allTasks.filter(t => {
+      const folder = allFolders.find(f => f.id === t.folderId);
+      const folderName = folder ? folder.name : '';
+      return (
+        normalizeText(t.title).includes(term) ||
+        normalizeText(t.description).includes(term) ||
+        normalizeText(folderName).includes(term) ||
+        (t.subtasks && t.subtasks.some(st => normalizeText(st.title).includes(term)))
+      );
+    });
+  } else {
+    // 2. Si no hay búsqueda activa, filtrar según la vista activa del menú lateral
+    if (currentView.startsWith('folder-')) {
+      const fId = currentView.replace('folder-', '');
+      filtered = filtered.filter(t => t.folderId === fId);
+    } else if (currentView === 'status-pendiente') {
+      filtered = filtered.filter(t => t.status === 'pendiente');
+    } else if (currentView === 'status-en_curso') {
+      filtered = filtered.filter(t => t.status === 'en_curso');
+    } else if (currentView === 'status-completado') {
+      filtered = filtered.filter(t => t.status === 'completado');
+    } else if (currentView === 'priority-high') {
+      filtered = filtered.filter(t => t.priority === 'alta' && t.status !== 'completado');
+    }
   }
 
   if (statusTaskCount) {
@@ -1162,23 +1235,38 @@ function renderTasks() {
   }
 
   if (filtered.length === 0) {
-    const isFiltered = currentView !== 'all' || searchTerm;
+    const isFiltered = currentView !== 'all' || term;
     tasksContainer.innerHTML = `
       <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 text-center text-slate-400 space-y-3">
         <div class="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 dark:text-indigo-400 flex items-center justify-center text-xl">
           <i class="fa-regular fa-clipboard"></i>
         </div>
         <div class="space-y-1">
-          <p class="text-xs font-bold text-slate-700 dark:text-slate-200">${isFiltered ? 'No hay tareas en esta sección o búsqueda.' : 'No tienes tareas registradas todavía.'}</p>
-          <p class="text-[11px] text-slate-400 dark:text-slate-400">${isFiltered ? 'Puedes cambiar de vista en el menú lateral o agregar una nueva tarea.' : 'Comienza creando tu primera tarea personal o de trabajo.'}</p>
+          <p class="text-xs font-bold text-slate-700 dark:text-slate-200">
+            ${term ? `No se encontraron tareas que coincidan con "${escapeHtml(searchTerm)}".` : (isFiltered ? 'No hay tareas en esta sección.' : 'No tienes tareas registradas todavía.')}
+          </p>
+          <p class="text-[11px] text-slate-400 dark:text-slate-400">
+            ${term ? 'Prueba con otro término o limpia el buscador para ver tus tareas.' : (isFiltered ? 'Puedes cambiar de vista en el menú lateral o agregar una nueva tarea.' : 'Comienza creando tu primera tarea personal o de trabajo.')}
+          </p>
         </div>
-        <button 
-          onclick="openNewTaskModal()" 
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition active:scale-95"
-        >
-          <i class="fa-solid fa-plus text-xs"></i>
-          <span>Crear Nueva Tarea</span>
-        </button>
+        ${term ? `
+          <button 
+            type="button"
+            onclick="document.getElementById('btn-clear-search')?.click()" 
+            class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer"
+          >
+            <i class="fa-solid fa-xmark text-xs"></i>
+            <span>Limpiar Búsqueda</span>
+          </button>
+        ` : `
+          <button 
+            onclick="openNewTaskModal()" 
+            class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition active:scale-95"
+          >
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Crear Nueva Tarea</span>
+          </button>
+        `}
       </div>
     `;
     return;

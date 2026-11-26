@@ -229,6 +229,14 @@ html.dark #search-input::placeholder {
   color: #64748b !important;
 }
 
+html.dark #btn-clear-search {
+  color: #94a3b8 !important;
+}
+
+html.dark #btn-clear-search:hover {
+  color: #f8fafc !important;
+}
+
 html.dark #topbar-logged-in-view {
   background-color: transparent !important;
   border-color: transparent !important;
