@@ -945,6 +945,44 @@
     </div>
   </div>
 
+  <!-- ========================================================== -->
+  <!-- MODAL DE CONFIRMACIÓN Y ALERTAS (Reemplaza confirm() y alert()) -->
+  <!-- ========================================================== -->
+  <div id="modal-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 animate-fadeIn my-auto space-y-4">
+      
+      <!-- Contenido: Icono + Título + Mensaje -->
+      <div class="flex items-start gap-3.5">
+        <div id="confirm-modal-icon-container" class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0">
+          <i id="confirm-modal-icon" class="fa-solid fa-circle-question"></i>
+        </div>
+        <div class="space-y-1 min-w-0 flex-1">
+          <h3 id="confirm-modal-title" class="font-bold text-slate-800 text-sm">Confirmar acción</h3>
+          <p id="confirm-modal-message" class="text-xs text-slate-600 leading-relaxed break-words"></p>
+        </div>
+      </div>
+
+      <!-- Botones de Acción -->
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+        <button 
+          id="btn-confirm-cancel" 
+          type="button" 
+          class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-100 transition active:scale-95"
+        >
+          Cancelar
+        </button>
+        <button 
+          id="btn-confirm-accept" 
+          type="button" 
+          class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs shadow-indigo-200 transition active:scale-95"
+        >
+          Aceptar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

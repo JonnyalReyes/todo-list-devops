@@ -145,6 +145,129 @@ const sidebarUserRole = document.getElementById('sidebar-user-role');
 const btnSidebarAuth = document.getElementById('btn-sidebar-auth');
 const sidebarAuthIcon = document.getElementById('sidebar-auth-icon');
 
+// DOM Elements - Modal de Confirmación y Alertas Personalizado
+const modalConfirm = document.getElementById('modal-confirm');
+const confirmModalTitle = document.getElementById('confirm-modal-title');
+const confirmModalMessage = document.getElementById('confirm-modal-message');
+const confirmModalIcon = document.getElementById('confirm-modal-icon');
+const confirmModalIconContainer = document.getElementById('confirm-modal-icon-container');
+const btnConfirmCancel = document.getElementById('btn-confirm-cancel');
+const btnConfirmAccept = document.getElementById('btn-confirm-accept');
+
+function showConfirm(messageOrOptions, options = {}) {
+  return new Promise((resolve) => {
+    let title = 'Confirmar acción';
+    let message = '';
+    let confirmText = 'Aceptar';
+    let cancelText = 'Cancelar';
+    let isDanger = false;
+    let showCancel = true;
+    let icon = null;
+
+    if (typeof messageOrOptions === 'string') {
+      message = messageOrOptions;
+      if (options.title) title = options.title;
+      else if (message.toLowerCase().includes('eliminar')) title = 'Eliminar';
+      else if (message.toLowerCase().includes('cerrar')) title = 'Cerrar Sesión';
+
+      if (options.confirmText) confirmText = options.confirmText;
+      if (options.cancelText) cancelText = options.cancelText;
+      if (options.showCancel !== undefined) showCancel = options.showCancel;
+      if (options.icon) icon = options.icon;
+      isDanger = options.isDanger !== undefined ? options.isDanger : (message.toLowerCase().includes('eliminar') || message.toLowerCase().includes('cerrar'));
+    } else if (typeof messageOrOptions === 'object' && messageOrOptions !== null) {
+      const opts = messageOrOptions;
+      message = opts.message || '';
+      title = opts.title || (message.toLowerCase().includes('eliminar') ? 'Eliminar' : (message.toLowerCase().includes('cerrar') ? 'Cerrar Sesión' : 'Confirmar acción'));
+      confirmText = opts.confirmText || 'Aceptar';
+      cancelText = opts.cancelText || 'Cancelar';
+      if (opts.showCancel !== undefined) showCancel = opts.showCancel;
+      icon = opts.icon || null;
+      isDanger = opts.isDanger !== undefined ? opts.isDanger : (message.toLowerCase().includes('eliminar') || message.toLowerCase().includes('cerrar'));
+    }
+
+    confirmModalTitle.textContent = title;
+    confirmModalMessage.textContent = message;
+    btnConfirmAccept.textContent = confirmText;
+    btnConfirmCancel.textContent = cancelText;
+
+    if (showCancel) {
+      btnConfirmCancel.classList.remove('hidden');
+    } else {
+      btnConfirmCancel.classList.add('hidden');
+    }
+
+    if (isDanger) {
+      btnConfirmAccept.className = 'px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs shadow-rose-200 transition active:scale-95';
+      confirmModalIconContainer.className = 'w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg shrink-0';
+      confirmModalIcon.className = icon || (message.toLowerCase().includes('cerrar') ? 'fa-solid fa-right-from-bracket' : 'fa-solid fa-trash-can');
+    } else {
+      btnConfirmAccept.className = 'px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs shadow-indigo-200 transition active:scale-95';
+      confirmModalIconContainer.className = 'w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0';
+      confirmModalIcon.className = icon || 'fa-solid fa-circle-question';
+    }
+
+    function cleanup() {
+      modalConfirm.classList.add('hidden');
+      btnConfirmCancel.removeEventListener('click', onCancel);
+      btnConfirmAccept.removeEventListener('click', onAccept);
+      modalConfirm.removeEventListener('click', onBackdrop);
+      window.removeEventListener('keydown', onKeyDown);
+    }
+
+    function onCancel() {
+      cleanup();
+      resolve(false);
+    }
+
+    function onAccept() {
+      cleanup();
+      resolve(true);
+    }
+
+    function onBackdrop(e) {
+      if (e.target === modalConfirm) {
+        cleanup();
+        resolve(false);
+      }
+    }
+
+    function onKeyDown(e) {
+      if (e.key === 'Escape') {
+        cleanup();
+        resolve(false);
+      } else if (e.key === 'Enter') {
+        cleanup();
+        resolve(true);
+      }
+    }
+
+    btnConfirmCancel.addEventListener('click', onCancel);
+    btnConfirmAccept.addEventListener('click', onAccept);
+    modalConfirm.addEventListener('click', onBackdrop);
+    window.addEventListener('keydown', onKeyDown);
+
+    modalConfirm.classList.remove('hidden');
+    setTimeout(() => {
+      if (showCancel) {
+        btnConfirmCancel.focus();
+      } else {
+        btnConfirmAccept.focus();
+      }
+    }, 50);
+  });
+}
+
+function showAlert(message, title = 'Atención', icon = null) {
+  return showConfirm(message, {
+    title,
+    confirmText: 'Entendido',
+    showCancel: false,
+    isDanger: false,
+    icon: icon || 'fa-solid fa-circle-info'
+  });
+}
+
 // ==========================================================
 // SISTEMA DE DROPDOWNS MODERNOS
 // ==========================================================
@@ -521,7 +644,7 @@ btnSaveTaskDetail.addEventListener('click', async () => {
   if (!activeEditingTask) return;
   const newTitle = detailTitleInput.value.trim();
   if (!newTitle) {
-    alert('El título de la tarea no puede estar vacío.');
+    showAlert('El título de la tarea no puede estar vacío.', 'Campo requerido');
     return;
   }
 
@@ -551,7 +674,7 @@ btnSaveTaskDetail.addEventListener('click', async () => {
     await fetchTasks();
     await fetchFolders();
   } catch (err) {
-    alert('No se pudieron guardar los cambios.');
+    showAlert('No se pudieron guardar los cambios.', 'Error');
   } finally {
     btnSaveTaskDetail.disabled = false;
     btnSaveTaskDetail.textContent = 'Guardar Cambios';
@@ -560,11 +683,18 @@ btnSaveTaskDetail.addEventListener('click', async () => {
 
 btnDeleteTaskModal.addEventListener('click', async () => {
   if (!activeEditingTask) return;
-  if (!confirm(`¿Eliminar la tarea "${activeEditingTask.title}"?`)) return;
+  const confirmed = await showConfirm(`¿Eliminar la tarea "${activeEditingTask.title}"?`, {
+    title: 'Eliminar Tarea',
+    confirmText: 'Aceptar',
+    cancelText: 'Cancelar',
+    isDanger: true,
+    icon: 'fa-solid fa-trash-can'
+  });
+  if (!confirmed) return;
 
   const id = activeEditingTask.id;
   closeTaskDetailModal();
-  await deleteTask(id);
+  await deleteTask(id, true);
 });
 
 // ==========================================================
@@ -618,7 +748,7 @@ createFolderForm.addEventListener('submit', async (e) => {
       selectFolder(created.data.id);
     }
   } catch (err) {
-    alert('No se pudo crear la carpeta.');
+    showAlert('No se pudo crear la carpeta.', 'Error');
   }
 });
 
@@ -627,7 +757,7 @@ createFolderForm.addEventListener('submit', async (e) => {
 // ==========================================================
 function openDevopsModal() {
   if (!currentUser || !currentUser.isAdmin) {
-    alert('Acceso restringido: Esta configuración de pipelines y AWS está reservada exclusivamente para el Administrador (admin).');
+    showAlert('Acceso restringido: Esta configuración de pipelines y AWS está reservada exclusivamente para el Administrador (admin).', 'Acceso denegado', 'fa-solid fa-shield-halved');
     return;
   }
   devopsModal.classList.remove('hidden');
@@ -697,7 +827,7 @@ btnSaveApi.addEventListener('click', () => {
   fetchTelemetry();
   fetchFolders();
   fetchTasks();
-  alert('Configuración guardada.');
+  showAlert('Configuración de API guardada correctamente.', 'Configuración Guardada', 'fa-solid fa-circle-check');
 });
 
 // ==========================================================
@@ -796,7 +926,14 @@ window.selectFolder = function(folderId) {
 };
 
 window.deleteFolder = async function(id, name) {
-  if (!confirm(`¿Eliminar la carpeta "${name}"? Las tareas asociadas se conservarán.`)) return;
+  const confirmed = await showConfirm(`¿Eliminar la carpeta "${name}"? Las tareas asociadas se conservarán.`, {
+    title: 'Eliminar Carpeta',
+    confirmText: 'Aceptar',
+    cancelText: 'Cancelar',
+    isDanger: true,
+    icon: 'fa-solid fa-trash-can'
+  });
+  if (!confirmed) return;
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/folders/${id}`, {
@@ -814,7 +951,7 @@ window.deleteFolder = async function(id, name) {
     await fetchFolders();
     await fetchTasks();
   } catch (err) {
-    alert('No se pudo eliminar la carpeta.');
+    showAlert('No se pudo eliminar la carpeta.', 'Error');
   }
 };
 
@@ -1174,7 +1311,7 @@ newTaskForm.addEventListener('submit', async (e) => {
     await fetchFolders();
     fetchTelemetry();
   } catch (err) {
-    alert('No se pudo guardar la tarea.');
+    showAlert('No se pudo guardar la tarea.', 'Error');
   } finally {
     btnSubmitNewTask.disabled = false;
     btnSubmitNewTask.innerHTML = '<i class="fa-solid fa-plus text-xs"></i><span>Crear Tarea</span>';
@@ -1203,7 +1340,20 @@ window.toggleTaskQuick = async function(id, isChecked) {
   }
 };
 
-window.deleteTask = async function(id) {
+window.deleteTask = async function(id, skipConfirm = false) {
+  if (!skipConfirm) {
+    const task = allTasks.find(t => t.id === id);
+    const title = task ? task.title : 'esta tarea';
+    const confirmed = await showConfirm(`¿Eliminar la tarea "${title}"?`, {
+      title: 'Eliminar Tarea',
+      confirmText: 'Aceptar',
+      cancelText: 'Cancelar',
+      isDanger: true,
+      icon: 'fa-solid fa-trash-can'
+    });
+    if (!confirmed) return;
+  }
+
   allTasks = allTasks.filter(t => t.id !== id);
   renderTasks();
   updateBadges();
@@ -1410,18 +1560,25 @@ authForm.addEventListener('submit', async (e) => {
   }
 });
 
-function handleLogout() {
-  if (confirm(`¿Cerrar la sesión de "${currentUser ? currentUser.username : 'usuario'}"?`)) {
-    localStorage.removeItem('TASKFLOW_USER');
-    currentUser = null;
-    allTasks = [];
-    allFolders = [];
-    renderFoldersList();
-    renderTasks();
-    updateBadges();
-    updateAuthUI();
-    openAuthModal('login');
-  }
+async function handleLogout() {
+  const confirmed = await showConfirm(`¿Cerrar la sesión de "${currentUser ? currentUser.username : 'usuario'}"?`, {
+    title: 'Cerrar Sesión',
+    confirmText: 'Aceptar',
+    cancelText: 'Cancelar',
+    isDanger: true,
+    icon: 'fa-solid fa-right-from-bracket'
+  });
+  if (!confirmed) return;
+
+  localStorage.removeItem('TASKFLOW_USER');
+  currentUser = null;
+  allTasks = [];
+  allFolders = [];
+  renderFoldersList();
+  renderTasks();
+  updateBadges();
+  updateAuthUI();
+  openAuthModal('login');
 }
 
 if (btnTopbarLogout) btnTopbarLogout.addEventListener('click', handleLogout);
