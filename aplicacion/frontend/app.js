@@ -1105,7 +1105,7 @@ function renderTasks() {
   } else if (currentView === 'status-completado') {
     filtered = filtered.filter(t => t.status === 'completado');
   } else if (currentView === 'priority-high') {
-    filtered = filtered.filter(t => t.priority === 'alta');
+    filtered = filtered.filter(t => t.priority === 'alta' && t.status !== 'completado');
   }
 
   // 2. Búsqueda por texto (título, descripción, mini tareas)
