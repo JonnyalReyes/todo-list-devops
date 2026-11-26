@@ -21,19 +21,6 @@
   font-weight: 700;
 }
 
-/* Pills de filtro de estado interactivo */
-.filter-status-pill {
-  transition: all 0.15s ease;
-  user-select: none;
-}
-
-.filter-status-pill.active {
-  background-color: #ffffff;
-  color: #4f46e5;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.08);
-  font-weight: 700;
-}
-
 /* Cards de tareas interactivas */
 .task-card {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
