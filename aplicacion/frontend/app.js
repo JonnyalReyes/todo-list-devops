@@ -1400,6 +1400,7 @@ async function fetchTasks() {
     if (!res.ok) throw new Error('Error al cargar tareas');
     const result = await res.json();
     allTasks = result.data || [];
+    applySavedTaskOrder();
 
     updateBadges();
     renderTasks();
@@ -1556,9 +1557,19 @@ function renderTasks() {
 
     return `
       <div 
-        class="task-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3.5 sm:p-4 flex items-start gap-3 ${isDone ? 'task-completed bg-slate-50/70 dark:bg-slate-900/50' : ''}" 
-        onclick="openTaskDetailModal(${task.id})"
+        class="task-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3.5 sm:p-4 flex items-start gap-2.5 sm:gap-3 ${isDone ? 'task-completed bg-slate-50/70 dark:bg-slate-900/50' : ''}" 
+        onclick="if (!wasDragging) openTaskDetailModal(${task.id})"
+        draggable="true"
+        data-task-id="${task.id}"
       >
+        <!-- Manija de arrastre (Drag handle) -->
+        <div 
+          class="drag-handle text-slate-300 dark:text-slate-600 hover:text-indigo-600 dark:hover:text-indigo-400 p-0.5 sm:p-1 flex items-center justify-center self-center shrink-0 transition" 
+          title="Arrastrar para reordenar"
+        >
+          <i class="fa-solid fa-grip-vertical text-xs"></i>
+        </div>
+
         <input 
           type="checkbox" 
           ${isDone ? 'checked' : ''} 
@@ -1619,6 +1630,225 @@ function escapeHtml(str) {
     "'": '&#39;',
     '"': '&quot;'
   }[tag] || tag));
+}
+
+// ==========================================================
+// DRAG & DROP: REORDENAMIENTO DE TAREAS
+// ==========================================================
+let draggedTaskId = null;
+let wasDragging = false;
+let dropPosition = 'bottom';
+let touchDragCard = null;
+let touchMoved = false;
+
+function applySavedTaskOrder() {
+  if (!currentUser) return;
+  try {
+    const savedOrder = localStorage.getItem(`TASKFLOW_ORDER_${currentUser.id || currentUser.username}`);
+    if (savedOrder) {
+      const orderIds = JSON.parse(savedOrder);
+      const orderMap = new Map();
+      orderIds.forEach((id, idx) => orderMap.set(parseInt(id, 10), idx));
+      allTasks.sort((a, b) => {
+        const idxA = orderMap.has(a.id) ? orderMap.get(a.id) : 99999;
+        const idxB = orderMap.has(b.id) ? orderMap.get(b.id) : 99999;
+        return idxA - idxB;
+      });
+    }
+  } catch (e) {}
+}
+
+async function saveTaskOrder() {
+  if (!currentUser) return;
+  const taskIds = allTasks.map(t => t.id);
+
+  // Guardar en localStorage para persistencia instantánea y local
+  try {
+    const userKey = `TASKFLOW_ORDER_${currentUser.id || currentUser.username}`;
+    localStorage.setItem(userKey, JSON.stringify(taskIds));
+  } catch (e) {}
+
+  // Enviar nuevo orden al backend
+  try {
+    await fetch(`${API_BASE_URL}/api/tasks/reorder`, {
+      method: 'PUT',
+      headers: getAuthHeaders(true),
+      body: JSON.stringify({ taskIds })
+    });
+  } catch (err) {
+    console.warn('Error al guardar nuevo orden de tareas en el backend:', err);
+  }
+}
+
+function initTaskDragAndDrop() {
+  if (!tasksContainer) return;
+
+  // 1. Drag Start
+  tasksContainer.addEventListener('dragstart', (e) => {
+    const card = e.target.closest('.task-card');
+    if (!card) return;
+    const taskId = parseInt(card.getAttribute('data-task-id'), 10);
+    if (!taskId) return;
+
+    draggedTaskId = taskId;
+    wasDragging = true;
+    card.classList.add('is-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(taskId));
+  });
+
+  // 2. Drag End
+  tasksContainer.addEventListener('dragend', (e) => {
+    const cards = tasksContainer.querySelectorAll('.task-card');
+    cards.forEach(c => c.classList.remove('is-dragging', 'drag-over-top', 'drag-over-bottom'));
+    draggedTaskId = null;
+    setTimeout(() => { wasDragging = false; }, 150);
+  });
+
+  // 3. Drag Over
+  tasksContainer.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const card = e.target.closest('.task-card');
+    if (!card) return;
+    const targetId = parseInt(card.getAttribute('data-task-id'), 10);
+    if (!targetId || targetId === draggedTaskId) return;
+
+    e.dataTransfer.dropEffect = 'move';
+
+    const rect = card.getBoundingClientRect();
+    const isTop = (e.clientY - rect.top) < (rect.height / 2);
+    dropPosition = isTop ? 'top' : 'bottom';
+
+    const cards = tasksContainer.querySelectorAll('.task-card');
+    cards.forEach(c => {
+      if (c !== card) c.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+
+    if (isTop) {
+      card.classList.add('drag-over-top');
+      card.classList.remove('drag-over-bottom');
+    } else {
+      card.classList.add('drag-over-bottom');
+      card.classList.remove('drag-over-top');
+    }
+  });
+
+  // 4. Drag Leave
+  tasksContainer.addEventListener('dragleave', (e) => {
+    const card = e.target.closest('.task-card');
+    if (card && (!e.relatedTarget || !card.contains(e.relatedTarget))) {
+      card.classList.remove('drag-over-top', 'drag-over-bottom');
+    }
+  });
+
+  // 5. Drop
+  tasksContainer.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    const card = e.target.closest('.task-card');
+    if (!card) return;
+    const targetId = parseInt(card.getAttribute('data-task-id'), 10);
+    const sourceId = draggedTaskId || parseInt(e.dataTransfer.getData('text/plain'), 10);
+
+    const cards = tasksContainer.querySelectorAll('.task-card');
+    cards.forEach(c => c.classList.remove('is-dragging', 'drag-over-top', 'drag-over-bottom'));
+
+    if (!sourceId || !targetId || sourceId === targetId) return;
+
+    const sourceIndex = allTasks.findIndex(t => t.id === sourceId);
+    const targetIndex = allTasks.findIndex(t => t.id === targetId);
+
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    // Extraer tarea arrastrada
+    const [movedTask] = allTasks.splice(sourceIndex, 1);
+    const newTargetIndex = allTasks.findIndex(t => t.id === targetId);
+    const insertIndex = dropPosition === 'top' ? newTargetIndex : newTargetIndex + 1;
+
+    allTasks.splice(insertIndex, 0, movedTask);
+
+    renderTasks();
+    await saveTaskOrder();
+  });
+
+  // 6. Soporte táctil para móviles (touch en .drag-handle)
+  tasksContainer.addEventListener('touchstart', (e) => {
+    const handle = e.target.closest('.drag-handle');
+    if (!handle) return;
+    const card = handle.closest('.task-card');
+    if (!card) return;
+
+    touchDragCard = card;
+    draggedTaskId = parseInt(card.getAttribute('data-task-id'), 10);
+    touchMoved = false;
+    card.classList.add('is-dragging');
+  }, { passive: true });
+
+  tasksContainer.addEventListener('touchmove', (e) => {
+    if (!touchDragCard) return;
+    touchMoved = true;
+    const touch = e.touches[0];
+    const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetCard = targetEl ? targetEl.closest('.task-card') : null;
+
+    const cards = tasksContainer.querySelectorAll('.task-card');
+    cards.forEach(c => {
+      if (c !== targetCard) c.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+
+    if (targetCard && targetCard !== touchDragCard) {
+      const rect = targetCard.getBoundingClientRect();
+      const isTop = (touch.clientY - rect.top) < (rect.height / 2);
+      dropPosition = isTop ? 'top' : 'bottom';
+      if (isTop) {
+        targetCard.classList.add('drag-over-top');
+        targetCard.classList.remove('drag-over-bottom');
+      } else {
+        targetCard.classList.add('drag-over-bottom');
+        targetCard.classList.remove('drag-over-top');
+      }
+    }
+  }, { passive: true });
+
+  tasksContainer.addEventListener('touchend', async (e) => {
+    if (!touchDragCard) return;
+    const card = touchDragCard;
+
+    const cards = tasksContainer.querySelectorAll('.task-card');
+    let targetCard = null;
+    cards.forEach(c => {
+      if (c.classList.contains('drag-over-top') || c.classList.contains('drag-over-bottom')) {
+        targetCard = c;
+      }
+      c.classList.remove('is-dragging', 'drag-over-top', 'drag-over-bottom');
+    });
+
+    if (touchMoved && targetCard && targetCard !== card) {
+      const sourceId = draggedTaskId;
+      const targetId = parseInt(targetCard.getAttribute('data-task-id'), 10);
+
+      if (sourceId && targetId && sourceId !== targetId) {
+        const sourceIndex = allTasks.findIndex(t => t.id === sourceId);
+        const targetIndex = allTasks.findIndex(t => t.id === targetId);
+
+        if (sourceIndex !== -1 && targetIndex !== -1) {
+          const [movedTask] = allTasks.splice(sourceIndex, 1);
+          const newTargetIndex = allTasks.findIndex(t => t.id === targetId);
+          const insertIndex = dropPosition === 'top' ? newTargetIndex : newTargetIndex + 1;
+          allTasks.splice(insertIndex, 0, movedTask);
+
+          wasDragging = true;
+          setTimeout(() => { wasDragging = false; }, 200);
+
+          renderTasks();
+          await saveTaskOrder();
+        }
+      }
+    }
+
+    touchDragCard = null;
+    draggedTaskId = null;
+    touchMoved = false;
+  });
 }
 
 // ==========================================================
@@ -2023,12 +2253,34 @@ btnSidebarAuth.addEventListener('click', () => {
   }
 });
 
+// Botón "Actualizar" junto a Nueva Tarea
+const btnRefreshTasks = document.getElementById('btn-refresh-tasks');
+if (btnRefreshTasks) {
+  btnRefreshTasks.addEventListener('click', async () => {
+    const icon = btnRefreshTasks.querySelector('i');
+    if (icon) icon.classList.add('fa-spin');
+    btnRefreshTasks.classList.add('opacity-80');
+    try {
+      await fetchFolders();
+      await fetchTasks();
+    } catch (err) {
+      console.error('Error al actualizar tareas:', err);
+    } finally {
+      setTimeout(() => {
+        if (icon) icon.classList.remove('fa-spin');
+        btnRefreshTasks.classList.remove('opacity-80');
+      }, 500);
+    }
+  });
+}
+
 // ==========================================================
 // INICIALIZACIÓN
 // ==========================================================
 apiUrlInput.value = API_BASE_URL;
 initTheme();
 initAuth();
+initTaskDragAndDrop();
 fetchTelemetry();
 
 setInterval(fetchTelemetry, 25000);

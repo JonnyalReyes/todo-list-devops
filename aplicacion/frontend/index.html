@@ -257,19 +257,28 @@
       <!-- ========================================================== -->
       <div class="flex items-center justify-between px-1 py-1 text-xs">
         <div class="flex items-center gap-2">
-          <span class="font-bold text-slate-800 text-sm sm:text-base" id="filter-display-label">Todas las tareas</span>
-          <span>&bull;</span>
-          <span id="status-task-count" class="font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full text-[11px]">0 tareas</span>
+          <span class="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base" id="filter-display-label">Todas las tareas</span>
+          <span class="text-slate-400 dark:text-slate-500">&bull;</span>
+          <span id="status-task-count" class="font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 rounded-full text-[11px]">0 tareas</span>
         </div>
         
         <div class="flex items-center gap-2">
-          <p class="hidden lg:flex items-center gap-1 text-[11px] text-slate-400 mr-1">
-            <i class="fa-regular fa-hand-pointer text-indigo-500"></i>
+          <p class="hidden lg:flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-400 mr-1">
+            <i class="fa-regular fa-hand-pointer text-indigo-500 dark:text-indigo-400"></i>
             <span>Clic en cualquier tarea para ver detalles o mini tareas</span>
           </p>
           <button 
+            id="btn-refresh-tasks" 
+            type="button"
+            class="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+            title="Actualizar lista de tareas"
+          >
+            <i class="fa-solid fa-arrows-rotate text-xs text-indigo-600 dark:text-indigo-400"></i>
+            <span>Actualizar</span>
+          </button>
+          <button 
             id="btn-header-new-task" 
-            class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition"
+            class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
           >
             <i class="fa-solid fa-plus text-xs"></i>
             <span>Nueva Tarea</span>

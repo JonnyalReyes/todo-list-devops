@@ -481,6 +481,48 @@ app.post('/api/tasks', (req, res) => {
   res.status(201).json({ success: true, data: newTask });
 });
 
+// Reordenar tareas del usuario (Drag & Drop)
+app.put('/api/tasks/reorder', (req, res) => {
+  const user = getAuthUser(req);
+  if (!user) {
+    return res.status(401).json({ success: false, error: 'No autorizado.' });
+  }
+
+  const { taskIds } = req.body;
+  if (!Array.isArray(taskIds)) {
+    return res.status(400).json({ success: false, error: 'taskIds debe ser un arreglo de IDs.' });
+  }
+
+  // Filtrar las tareas que pertenecen al usuario
+  const userTasksMap = new Map();
+  tasks.forEach(t => {
+    if (t.userId === user.id || t.username === user.username) {
+      userTasksMap.set(t.id, t);
+    }
+  });
+
+  const reorderedUserTasks = [];
+  taskIds.forEach(rawId => {
+    const id = parseInt(rawId, 10);
+    if (userTasksMap.has(id)) {
+      reorderedUserTasks.push(userTasksMap.get(id));
+      userTasksMap.delete(id);
+    }
+  });
+
+  // Anexar cualquier tarea del usuario no incluida en taskIds
+  userTasksMap.forEach(task => {
+    reorderedUserTasks.push(task);
+  });
+
+  // Preservar tareas de otros usuarios en su orden original
+  const otherTasks = tasks.filter(t => t.userId !== user.id && t.username !== user.username);
+  tasks = [...reorderedUserTasks, ...otherTasks];
+
+  console.log(`[TAREAS REORDENADAS] Usuario: "${user.username}" - ${reorderedUserTasks.length} tareas reordenadas`);
+  res.json({ success: true, message: 'Orden de tareas guardado correctamente.' });
+});
+
 // Actualizar completamente una tarea (solo permitida al propietario)
 app.put('/api/tasks/:id', (req, res) => {
   const user = getAuthUser(req);
